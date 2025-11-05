@@ -1,0 +1,49 @@
+# InventoX API - Apache Configuration
+
+# Habilitar RewriteEngine
+RewriteEngine On
+
+# Redirecionar para HTTPS (produção)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Prevenir acesso a ficheiros sensíveis
+<FilesMatch "\.(env|log|sql|bak)$">
+    Require all denied
+</FilesMatch>
+
+# Headers de segurança
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "DENY"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Configuração PHP
+<IfModule mod_php8.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 300
+    php_value memory_limit 256M
+</IfModule>
+
+# CORS (permitir origem do pedido quando existir)
+<IfModule mod_headers.c>
+    # Capturar Origin da requisição
+    SetEnvIfNoCase Origin "^(.*)$" ORIGIN=$1
+    # Só definir ACAO quando houver Origin (evita header errado em same-origin)
+    Header always set Access-Control-Allow-Origin "%{ORIGIN}e" env=ORIGIN
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+    Header always set Access-Control-Allow-Credentials "true"
+</IfModule>
+
+# Tratar OPTIONS requests para CORS
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+
+# Error pages (comentado para não interferir com endpoints da API)
+# ErrorDocument 404 /api/error.php?code=404
+# ErrorDocument 500 /api/error.php?code=500
+

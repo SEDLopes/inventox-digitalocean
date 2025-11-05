@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#3B82F6">
+    <title>InventoX - Gestão de Inventário</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+    
+    <!-- Tailwind CSS CDN (Nota: Para produção, instale via npm) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- ZXing Library para Scanner -->
+    <script type="text/javascript" src="https://unpkg.com/@zxing/library@latest"></script>
+    
+    <!-- Styles customizados -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Validators -->
+    <script src="validators.js"></script>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+    
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <img src="assets/logo.svg" alt="InventoX Logo" class="h-10 w-10" onerror="this.style.display='none'">
+                    <h1 class="text-2xl font-bold text-blue-600">InventoX</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="userInfo" class="text-sm text-gray-600"></span>
+                    <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm hidden">
+                        Sair
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-8">
+        
+        <!-- Login Form (inicial) -->
+        <div id="loginSection" class="max-w-md mx-auto mt-20">
+            <div class="bg-white rounded-2xl shadow-md p-8">
+                <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Login</h2>
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                        <input type="text" id="username" required 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="password" required
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <button type="submit" 
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-200">
+                        Entrar
+                    </button>
+                    <button type="button" onclick="sessionStorage.clear(); location.reload();" 
+                            class="w-full mt-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 rounded-lg transition duration-200 text-sm">
+                        Limpar Sessão
+                    </button>
+                </form>
+                <div id="loginError" class="mt-4 text-red-600 text-sm text-center hidden"></div>
+            </div>
+        </div>
+
+        <!-- Dashboard (após login) -->
+        <div id="dashboardSection" class="hidden">
+            
+            <!-- Tabs Navigation -->
+            <div class="bg-white rounded-2xl shadow-md p-4 mb-6">
+                <div class="flex space-x-2 overflow-x-auto">
+                    <button class="tab-btn active px-6 py-2 rounded-lg bg-blue-600 text-white" data-tab="dashboard">
+                        Dashboard
+                    </button>
+                    <button class="tab-btn px-6 py-2 rounded-lg bg-gray-200 text-gray-700" data-tab="scanner">
+                        Scanner
+                    </button>
+                    <button class="tab-btn px-6 py-2 rounded-lg bg-gray-200 text-gray-700" data-tab="items">
+                        Artigos
+                    </button>
+                    <button class="tab-btn px-6 py-2 rounded-lg bg-gray-200 text-gray-700" data-tab="categories">
+                        Categorias
+                    </button>
+                    <button class="tab-btn px-6 py-2 rounded-lg bg-gray-200 text-gray-700" data-tab="sessions">
+                        Sessões
+                    </button>
+                    <button class="tab-btn px-6 py-2 rounded-lg bg-gray-200 text-gray-700" data-tab="import">
+                        Importar
+                    </button>
+                    <button id="historyTabBtn" class="tab-btn px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hidden" data-tab="history">
+                        Histórico
+                    </button>
+                    <button id="usersTabBtn" class="tab-btn px-6 py-2 rounded-lg bg-gray-200 text-gray-700 hidden" data-tab="users">
+                        Utilizadores
+                    </button>
+                    <button class="tab-btn px-6 py-2 rounded-lg bg-gray-200 text-gray-700" data-tab="companies">
+                        Empresas
+                    </button>
+                    <button class="tab-btn px-6 py-2 rounded-lg bg-gray-200 text-gray-700" data-tab="warehouses">
+                        Armazéns
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Content: Dashboard -->
+            <div id="dashboardTab" class="tab-content">
+                <!-- Banner de Alerta de Stock Baixo -->
+                <div id="lowStockBanner" class="hidden mb-4 p-4 rounded-xl border border-red-200 bg-red-50 flex items-start justify-between">
+                    <div class="pr-4">
+                        <p class="font-semibold text-red-700">Atenção: Existem artigos com stock baixo</p>
+                        <p class="text-sm text-red-600">Reveja a lista abaixo e considere repor o stock.</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="exportReport('stock_low', 'csv')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm">Exportar CSV</button>
+                        <button onclick="switchTab('items')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm">Ver Artigos</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <!-- Card Total Artigos -->
+                    <div class="bg-white rounded-2xl shadow-md p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Total de Artigos</p>
+                                <p id="statTotalItems" class="text-3xl font-bold text-blue-600">-</p>
+                            </div>
+                            <div class="bg-blue-100 rounded-full p-3">
+                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Stock Baixo -->
+                    <div class="bg-white rounded-2xl shadow-md p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Stock Baixo</p>
+                                <p id="statLowStock" class="text-3xl font-bold text-red-600">-</p>
+                            </div>
+                            <div class="bg-red-100 rounded-full p-3">
+                                <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Sessões Abertas -->
+                    <div class="bg-white rounded-2xl shadow-md p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Sessões Abertas</p>
+                                <p id="statOpenSessions" class="text-3xl font-bold text-green-600">-</p>
+                            </div>
+                            <div class="bg-green-100 rounded-full p-3">
+                                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Valor Inventário -->
+                    <div class="bg-white rounded-2xl shadow-md p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-600">Valor Inventário</p>
+                                <p id="statInventoryValue" class="text-2xl font-bold text-purple-600">-</p>
+                            </div>
+                            <div class="bg-purple-100 rounded-full p-3">
+                                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Artigos com Stock Baixo -->
+                <div class="bg-white rounded-2xl shadow-md p-6 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Artigos com Stock Baixo</h3>
+                        <div class="flex space-x-2">
+                            <button onclick="exportReport('stock_low', 'csv')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                                Exportar CSV
+                            </button>
+                            <button onclick="loadDashboard()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                                Atualizar
+                            </button>
+                        </div>
+                    </div>
+                    <div id="lowStockList" class="space-y-2">
+                        <!-- Lista será carregada aqui -->
+                    </div>
+                </div>
+
+                <!-- Top Categorias -->
+                <div class="bg-white rounded-2xl shadow-md p-6">
+                    <h3 class="text-xl font-bold mb-4">Top Categorias</h3>
+                    <div id="topCategoriesList" class="space-y-2">
+                        <!-- Lista será carregada aqui -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Scanner -->
+            <div id="scannerTab" class="tab-content hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Scanner Card -->
+                    <div class="bg-white rounded-2xl shadow-md p-6">
+                        <h3 class="text-xl font-bold mb-4">Scanner de Código de Barras</h3>
+                        <div class="mb-4">
+                            <video id="scannerVideo" class="w-full rounded-lg hidden" playsinline muted></video>
+                            <canvas id="scannerCanvas" class="w-full rounded-lg hidden"></canvas>
+                            <div id="scannerPlaceholder" class="bg-gray-100 rounded-lg h-64 flex items-center justify-center">
+                                <p class="text-gray-500">Clique para ativar a câmara</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 gap-2">
+                            <button id="startScannerBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                Iniciar Câmara
+                            </button>
+                            <button id="stopScannerBtn" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg hidden">
+                                Parar Scanner
+                            </button>
+                            <!-- Seletor de Câmara -->
+                            <div class="flex-1 hidden" id="cameraSelectWrapper">
+                                <select id="cameraSelect" class="w-full border border-gray-300 rounded-lg py-2 px-3 text-sm"></select>
+                            </div>
+                            <button id="switchCameraBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded-lg hidden">
+                                <span id="switchCameraBtnText">Trocar Câmara</span>
+                            </button>
+                        </div>
+                        <input type="text" id="manualBarcode" placeholder="Ou digite o código manualmente" 
+                               class="w-full mt-4 px-4 py-2 border border-gray-300 rounded-lg">
+                    </div>
+
+                    <!-- Session Info Card -->
+                    <div class="bg-white rounded-2xl shadow-md p-6">
+                        <h3 class="text-xl font-bold mb-4">Sessão de Inventário</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nome da Sessão</label>
+                                <input type="text" id="sessionName" placeholder="Ex: Inventário Janeiro 2024"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+                                <textarea id="sessionDescription" rows="3" placeholder="Descrição opcional"
+                                          class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                            </div>
+                            <button id="createSessionBtn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg">
+                                Criar Nova Sessão
+                            </button>
+                            <div id="currentSessionInfo" class="hidden p-4 bg-blue-50 rounded-lg">
+                                <p class="text-sm font-medium">Sessão Ativa:</p>
+                                <p id="currentSessionName" class="font-bold"></p>
+                                <p class="text-sm text-gray-600 mt-2">
+                                    Contagens: <span id="sessionCount">0</span>
+                                </p>
+                            </div>
+                            <select id="sessionSelect" class="w-full px-4 py-2 border border-gray-300 rounded-lg hidden">
+                                <option value="">Selecione uma sessão...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Item Info Card -->
+                <div id="itemInfoCard" class="bg-white rounded-2xl shadow-md p-6 mt-4 hidden">
+                    <h3 class="text-xl font-bold mb-4">Informações do Artigo</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600">Código de Barras</p>
+                            <p id="scannerItemBarcode" class="text-lg font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Nome</p>
+                            <p id="scannerItemName" class="text-lg font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">Quantidade Atual</p>
+                            <p id="scannerItemQuantity" class="text-lg font-semibold"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Quantidade Contada</label>
+                            <input type="number" id="countedQuantity" min="0" value="0"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                    </div>
+                    <button id="saveCountBtn" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg">
+                        Guardar Contagem
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Content: Items -->
+            <div id="itemsTab" class="tab-content hidden">
+                <div class="bg-white rounded-2xl shadow-md p-6 mb-4">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div class="flex-1">
+                            <input id="itemsSearch" type="text" placeholder="Pesquisar por nome ou código de barras" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <label class="inline-flex items-center text-sm text-gray-700 select-none">
+                                <input id="itemsLowStockOnly" type="checkbox" class="mr-2">
+                                Só stock baixo
+                            </label>
+                            <button id="addItemBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">Novo Artigo</button>
+                            <button id="refreshItemsBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Atualizar</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="itemsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                <div id="itemsPagination" class="mt-4 flex justify-center items-center gap-2"></div>
+            </div>
+
+                <!-- Modal Criar/Editar Artigo -->
+                <div id="itemModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-2xl shadow-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 id="itemModalTitle" class="text-2xl font-bold">Novo Artigo</h3>
+                            <button onclick="closeItemModal()" class="text-gray-500 hover:text-gray-700">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <form id="itemForm" class="space-y-4">
+                            <input type="hidden" id="itemId">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Código de Barras *</label>
+                                    <input type="text" id="itemBarcode" required
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
+                                    <input type="text" id="itemName" required
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+                                    <textarea id="itemDescription" rows="2"
+                                              class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
+                                    <select id="itemCategory" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                        <option value="">Selecione...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Quantidade</label>
+                                    <input type="number" id="itemQuantity" min="0" value="0"
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Quantidade Mínima</label>
+                                    <input type="number" id="itemMinQuantity" min="0" value="0"
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Preço Unitário</label>
+                                    <input type="number" id="itemPrice" min="0" step="0.01" value="0"
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Localização</label>
+                                    <input type="text" id="itemLocation"
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Fornecedor</label>
+                                    <input type="text" id="itemSupplier"
+                                           class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                </div>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-4">
+                                <button type="button" onclick="closeItemModal()" 
+                                        class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                                    Cancelar
+                                </button>
+                                <button type="submit" 
+                                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                                    Guardar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Categories -->
+            <div id="categoriesTab" class="tab-content hidden">
+                <div class="bg-white rounded-2xl shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Gestão de Categorias</h3>
+                        <button id="createCategoryBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                            + Nova Categoria
+                        </button>
+                    </div>
+                    <div id="categoriesList" class="space-y-4">
+                        <!-- Categorias serão carregadas aqui -->
+                    </div>
+                </div>
+
+                <!-- Modal Criar/Editar Categoria -->
+                <div id="categoryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-2xl shadow-lg p-6 max-w-md w-full mx-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 id="categoryModalTitle" class="text-2xl font-bold">Nova Categoria</h3>
+                            <button onclick="closeCategoryModal()" class="text-gray-500 hover:text-gray-700">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <form id="categoryForm" class="space-y-4">
+                            <input type="hidden" id="categoryId">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
+                                <input type="text" id="categoryName" required
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+                                <textarea id="categoryDescription" rows="3"
+                                          class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-4">
+                                <button type="button" onclick="closeCategoryModal()" 
+                                        class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                                    Cancelar
+                                </button>
+                                <button type="submit" 
+                                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                                    Guardar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Sessions -->
+            <div id="sessionsTab" class="tab-content hidden">
+                <!-- Detalhes da Sessão Selecionada -->
+                <div id="sessionDetailsCard" class="hidden bg-white rounded-2xl shadow-md p-6 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Detalhes da Sessão</h3>
+                        <button onclick="closeSessionDetails()" class="text-gray-500 hover:text-gray-700">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="sessionDetailsContent">
+                        <!-- Conteúdo dos detalhes será carregado aqui -->
+                    </div>
+                </div>
+
+                <!-- Lista de Sessões -->
+                <div class="bg-white rounded-2xl shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Sessões de Inventário</h3>
+                        <button id="refreshSessionsBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                            Atualizar
+                        </button>
+                    </div>
+                    <div id="sessionsList" class="space-y-4">
+                        <!-- Sessões serão carregadas aqui -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Import -->
+            <div id="importTab" class="tab-content hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Importar Artigos -->
+                    <div class="bg-white rounded-2xl shadow-md p-6">
+                        <h3 class="text-xl font-bold mb-4">Importar Artigos</h3>
+                        <div class="space-y-4">
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                                <input type="file" id="importFile" accept=".csv,.xlsx,.xls" class="hidden">
+                                <label for="importFile" class="cursor-pointer">
+                                    <p class="text-gray-600 mb-2">Clique para selecionar um ficheiro CSV ou XLSX</p>
+                                    <p class="text-sm text-gray-500">Formatos suportados: CSV, XLSX, XLS</p>
+                                </label>
+                            </div>
+                            <button id="uploadBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                                Carregar Ficheiro
+                            </button>
+                            <div id="importResult" class="hidden"></div>
+                        </div>
+                    </div>
+
+                    <!-- Exportar Relatórios -->
+                    <div class="bg-white rounded-2xl shadow-md p-6">
+                        <h3 class="text-xl font-bold mb-4">Exportar Relatórios</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Relatório</label>
+                                <select id="reportType" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    <option value="items">Todos os Artigos</option>
+                                    <option value="stock_low">Stock Baixo</option>
+                                    <option value="movements">Movimentações de Stock</option>
+                                    <option value="sessions">Sessões de Inventário</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Formato</label>
+                                <select id="exportFormat" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    <option value="csv">CSV (Excel)</option>
+                                    <option value="json">JSON</option>
+                                </select>
+                            </div>
+                            <button onclick="exportReport()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg">
+                                Exportar Relatório
+                            </button>
+                            <div id="exportResult" class="hidden mt-4 p-3 rounded-lg"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: History -->
+            <div id="historyTab" class="tab-content hidden">
+                <div class="bg-white rounded-2xl shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Histórico de Movimentações de Stock</h3>
+                        <div class="flex space-x-2">
+                            <button onclick="exportReport('movements', 'csv')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                                Exportar CSV
+                            </button>
+                            <button onclick="loadStockHistory()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                                Atualizar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Filtros -->
+                    <div class="mb-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Movimento</label>
+                            <select id="historyType" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="">Todos</option>
+                                <option value="entrada">Entrada</option>
+                                <option value="saida">Saída</option>
+                                <option value="ajuste">Ajuste</option>
+                                <option value="transferencia">Transferência</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Data Desde</label>
+                            <input type="date" id="historyDateFrom" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Data Até</label>
+                            <input type="date" id="historyDateTo" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm">
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="loadStockHistory(1)" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                                Filtrar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="historyList" class="space-y-3">
+                        <!-- Histórico será carregado aqui -->
+                    </div>
+                    <div id="historyPagination" class="mt-4 flex justify-center space-x-2">
+                        <!-- Paginação será carregada aqui -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Users (Admin Only) -->
+            <div id="usersTab" class="tab-content hidden">
+                <div class="bg-white rounded-2xl shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Gestão de Utilizadores</h3>
+                        <div class="flex space-x-2">
+                            <input type="text" id="usersSearch" placeholder="Buscar utilizadores..." 
+                                   class="px-4 py-2 border border-gray-300 rounded-lg text-sm">
+                            <button id="searchUsersBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                                Buscar
+                            </button>
+                            <button id="createUserBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
+                                + Novo Utilizador
+                            </button>
+                        </div>
+                    </div>
+                    <div id="usersList" class="space-y-4">
+                        <!-- Utilizadores serão carregados aqui -->
+                    </div>
+                    <div id="usersPagination" class="mt-4 flex justify-center space-x-2">
+                        <!-- Paginação será carregada aqui -->
+                    </div>
+                </div>
+
+                <!-- Modal Criar/Editar Utilizador -->
+                <div id="userModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white rounded-2xl shadow-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 id="userModalTitle" class="text-2xl font-bold">Novo Utilizador</h3>
+                            <button onclick="closeUserModal()" class="text-gray-500 hover:text-gray-700">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <form id="userForm" class="space-y-4">
+                            <input type="hidden" id="userId">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Username *</label>
+                                <input type="text" id="userUsername" required
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                                <input type="email" id="userEmail" required
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Password <span id="passwordRequired">*</span></label>
+                                <input type="password" id="userPassword"
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                <p class="text-xs text-gray-500 mt-1">Deixe em branco para manter a password atual (edição)</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Role *</label>
+                                <select id="userRole" required class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                                    <option value="operador">Operador</option>
+                                    <option value="admin">Administrador</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" id="userIsActive" checked
+                                           class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+                                    <span class="text-sm font-medium text-gray-700">Utilizador Ativo</span>
+                                </label>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-4">
+                                <button type="button" onclick="closeUserModal()" 
+                                        class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                                    Cancelar
+                                </button>
+                                <button type="submit" 
+                                        class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                                    Guardar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Companies -->
+            <div id="companiesTab" class="tab-content hidden">
+                <div class="bg-white rounded-2xl shadow-md p-6 mb-4 flex items-center justify-between">
+                    <h3 class="text-xl font-bold">Empresas</h3>
+                    <button onclick="openCompanyModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">Nova Empresa</button>
+                </div>
+                <div id="companiesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- Company Modal -->
+            <div id="companyModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 id="companyModalTitle" class="text-2xl font-bold">Nova Empresa</h3>
+                        <button onclick="closeCompanyModal()" class="text-gray-500 hover:text-gray-700">✕</button>
+                    </div>
+                    <form id="companyForm" class="space-y-4">
+                        <input type="hidden" id="companyId">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Nome *</label>
+                            <input id="companyName" type="text" class="w-full border rounded-lg px-3 py-2" required>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Código</label>
+                                <input id="companyCode" type="text" class="w-full border rounded-lg px-3 py-2">
+                            </div>
+                            <div class="flex items-center mt-6">
+                                <input id="companyActive" type="checkbox" class="mr-2" checked>
+                                <span class="text-sm">Ativa</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Morada</label>
+                            <textarea id="companyAddress" rows="2" class="w-full border rounded-lg px-3 py-2"></textarea>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Telefone</label>
+                                <input id="companyPhone" type="text" class="w-full border rounded-lg px-3 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Email</label>
+                                <input id="companyEmail" type="email" class="w-full border rounded-lg px-3 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">NIF</label>
+                                <input id="companyTaxId" type="text" class="w-full border rounded-lg px-3 py-2">
+                            </div>
+                        </div>
+                        <div class="flex justify-end gap-2 mt-4">
+                            <button type="button" onclick="closeCompanyModal()" class="px-4 py-2 rounded-lg bg-gray-200">Cancelar</button>
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tab Content: Warehouses -->
+            <div id="warehousesTab" class="tab-content hidden">
+                <div class="bg-white rounded-2xl shadow-md p-6 mb-4 flex items-center justify-between">
+                    <h3 class="text-xl font-bold">Armazéns</h3>
+                    <button onclick="openWarehouseModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">Novo Armazém</button>
+                </div>
+                <div id="warehousesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- Warehouse Modal -->
+            <div id="warehouseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 id="warehouseModalTitle" class="text-2xl font-bold">Novo Armazém</h3>
+                        <button onclick="closeWarehouseModal()" class="text-gray-500 hover:text-gray-700">✕</button>
+                    </div>
+                    <form id="warehouseForm" class="space-y-4">
+                        <input type="hidden" id="warehouseId">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Empresa *</label>
+                            <select id="warehouseCompany" class="w-full border rounded-lg px-3 py-2" required></select>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Nome *</label>
+                                <input id="warehouseName" type="text" class="w-full border rounded-lg px-3 py-2" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Código</label>
+                                <input id="warehouseCode" type="text" class="w-full border rounded-lg px-3 py-2">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Morada</label>
+                            <textarea id="warehouseAddress" rows="2" class="w-full border rounded-lg px-3 py-2"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Localização</label>
+                            <input id="warehouseLocation" type="text" class="w-full border rounded-lg px-3 py-2">
+                        </div>
+                        <div class="flex items-center">
+                            <input id="warehouseActive" type="checkbox" class="mr-2" checked>
+                            <span class="text-sm">Ativo</span>
+                        </div>
+                        <div class="flex justify-end gap-2 mt-4">
+                            <button type="button" onclick="closeWarehouseModal()" class="px-4 py-2 rounded-lg bg-gray-200">Cancelar</button>
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p class="mt-4 text-gray-700">A processar...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="hidden fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+        <p id="toastMessage"></p>
+    </div>
+
+    <!-- Modal Configuração de Contagem -->
+    <div id="countSetupModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-bold">Configurar Contagem</h3>
+                <button onclick="closeCountSetupModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Empresa *</label>
+                    <select id="setupCompanySelect" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">Selecione uma empresa...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Armazém *</label>
+                    <select id="setupWarehouseSelect" required disabled
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-100">
+                        <option value="">Primeiro selecione uma empresa</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Sessão *</label>
+                    <select id="setupSessionSelect" required disabled
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-100">
+                        <option value="">Primeiro selecione empresa e armazém</option>
+                    </select>
+                    <button id="setupCreateNewSessionBtn" type="button" 
+                            class="mt-2 text-sm text-blue-600 hover:text-blue-800 hidden">
+                        + Criar nova sessão
+                    </button>
+                </div>
+                <div id="setupNewSessionForm" class="hidden space-y-2 p-4 bg-gray-50 rounded-lg">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Sessão *</label>
+                        <input type="text" id="setupSessionName" placeholder="Ex: Inventário Janeiro 2024"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                        <textarea id="setupSessionDescription" rows="2" placeholder="Descrição opcional"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="flex space-x-3 mt-6">
+                <button type="button" onclick="closeCountSetupModal()" 
+                        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg">
+                    Cancelar
+                </button>
+                <button type="button" onclick="confirmCountSetup()" 
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg">
+                    Confirmar e Iniciar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=20241104"></script>
+</body>
+</html>
+

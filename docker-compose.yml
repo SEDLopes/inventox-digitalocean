@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8
+    container_name: inventox_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: inventox
+      MYSQL_USER: inventox_user
+      MYSQL_PASSWORD: change_me
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  php-apache:
+    build:
+      context: .
+      dockerfile: Dockerfile.php
+    container_name: inventox_web
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - ./api:/var/www/html/api
+      - ./frontend:/var/www/html/frontend
+      - ./scripts:/var/www/html/scripts
+      - ./uploads:/var/www/html/uploads
+      - ./logs:/var/www/html/logs
+      - php_sessions:/var/lib/php/sessions
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - DB_HOST=mysql
+      - DB_NAME=inventox
+      - DB_USER=inventox_user
+      - DB_PASS=change_me
+      - DB_PORT=3306
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: inventox_phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: root
+      UPLOAD_LIMIT: 300M
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  php_sessions:
+

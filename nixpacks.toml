@@ -1,0 +1,18 @@
+[phases.setup]
+nixPkgs = ["...", "php82", "php82Extensions.mysqli", "php82Extensions.pdo_mysql", "python3", "python3Packages.pip"]
+
+[phases.install]
+cmds = [
+    "pip install pandas sqlalchemy pymysql openpyxl python-dotenv"
+]
+
+[phases.build]
+cmds = [
+    "cp -r frontend/* .",
+    "cp -r api .",
+    "cp -r scripts .",
+    "cp db.sql ."
+]
+
+[start]
+cmd = "apache2-foreground"
