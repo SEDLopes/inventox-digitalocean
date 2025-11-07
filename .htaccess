@@ -1,5 +1,37 @@
+```apache
+# DigitalOcean Apache Configuration
+DirectoryIndex index.html index.php
+
 # Forçar processamento PHP
 AddType application/x-httpd-php .php
 <FilesMatch "\.php$">
     SetHandler application/x-httpd-php
 </FilesMatch>
+
+# Rewrite rules para SPA
+RewriteEngine On
+
+# Redirecionar root para frontend
+RewriteRule ^$ /frontend/ [R=301,L]
+
+# API routes
+RewriteRule ^api/(.*)$ /api/$1 [L]
+
+# Frontend routes (SPA)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} ^/frontend/
+RewriteRule ^frontend/.*$ /frontend/index.html [L]
+
+# CORS Headers
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+    Header always set Access-Control-Allow-Credentials "true"
+</IfModule>
+
+# Handle OPTIONS requests
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ $1 [R=200,L]
+```
