@@ -1,7 +1,10 @@
 <?php
-// Health check endpoint for Railway
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+// Health check endpoint - Forçar processamento PHP
+// Adicionar header antes de qualquer output
+if (!headers_sent()) {
+    header('Content-Type: application/json');
+    header('Access-Control-Allow-Origin: *');
+}
 
 try {
     // Verificar se o PHP está funcionando
