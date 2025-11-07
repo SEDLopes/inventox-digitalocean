@@ -1,0 +1,22 @@
+# Forçar processamento PHP - Configuração agressiva
+<IfModule mod_mime.c>
+    AddType application/x-httpd-php .php
+    AddType application/x-httpd-php-source .phps
+</IfModule>
+
+<IfModule mod_php.c>
+    php_flag engine on
+</IfModule>
+
+<FilesMatch "\.php$">
+    SetHandler application/x-httpd-php
+    ForceType application/x-httpd-php
+</FilesMatch>
+
+# Configurar diretório
+<Directory />
+    DirectoryIndex index.php index.html
+    AllowOverride All
+    Options -Indexes +FollowSymLinks
+    Require all granted
+</Directory>

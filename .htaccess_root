@@ -1,0 +1,5 @@
+# Forçar processamento PHP na raiz
+AddType application/x-httpd-php .php
+<FilesMatch "\.php$">
+    SetHandler application/x-httpd-php
+</FilesMatch>
