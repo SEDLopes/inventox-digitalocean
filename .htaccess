@@ -1,16 +1,12 @@
-# DigitalOcean Apache Configuration - Forçar processamento PHP
+# DigitalOcean Apache Configuration
+# O Heroku buildpack usa PHP-FPM, então não precisamos SetHandler aqui
 DirectoryIndex index.php index.html
 
-# Forçar processamento PHP - Configuração agressiva
+# Configurar tipos MIME
 <IfModule mod_mime.c>
     AddType application/x-httpd-php .php
     AddType application/x-httpd-php-source .phps
 </IfModule>
-
-<FilesMatch "\.php$">
-    SetHandler application/x-httpd-php
-    ForceType application/x-httpd-php
-</FilesMatch>
 
 # Habilitar mod_rewrite
 RewriteEngine On

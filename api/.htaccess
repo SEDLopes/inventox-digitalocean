@@ -1,12 +1,7 @@
-# Forçar processamento PHP na pasta API
+# Configuração API - PHP-FPM processa automaticamente
 <IfModule mod_mime.c>
     AddType application/x-httpd-php .php
 </IfModule>
-
-<FilesMatch "\.php$">
-    SetHandler application/x-httpd-php
-    ForceType application/x-httpd-php
-</FilesMatch>
 
 # CORS Headers
 <IfModule mod_headers.c>
