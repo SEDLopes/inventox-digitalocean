@@ -17,8 +17,11 @@ RUN apt-get update && apt-get install -y \
 RUN a2enmod rewrite
 RUN a2enmod headers
 
-# Criar configuração Apache personalizada para garantir processamento PHP
-RUN echo '<Directory /var/www/html>' > /etc/apache2/conf-available/php-handler.conf && \
+# Configurar Apache para processar PHP corretamente
+RUN echo '<FilesMatch \.php$>' > /etc/apache2/conf-available/php-handler.conf && \
+    echo '    SetHandler application/x-httpd-php' >> /etc/apache2/conf-available/php-handler.conf && \
+    echo '</FilesMatch>' >> /etc/apache2/conf-available/php-handler.conf && \
+    echo '<Directory /var/www/html>' >> /etc/apache2/conf-available/php-handler.conf && \
     echo '    Options Indexes FollowSymLinks' >> /etc/apache2/conf-available/php-handler.conf && \
     echo '    AllowOverride All' >> /etc/apache2/conf-available/php-handler.conf && \
     echo '    Require all granted' >> /etc/apache2/conf-available/php-handler.conf && \

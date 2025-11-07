@@ -1,36 +1,39 @@
-name: inventox
+name: inventox-app
+region: ams
 services:
-- name: web
-  source_dir: /
+- name: inventox-app
   github:
-    repo: SandroLopes/inventox
+    repo: SEDLopes/inventox-app
     branch: main
-  run_command: apache2-foreground
+    deploy_on_push: true
+  build_command: ""
+  run_command: ""
   environment_slug: php
   instance_count: 1
   instance_size_slug: basic-xxs
-  http_port: 80
   routes:
   - path: /
+  http_port: 80
+  health_check:
+    http_path: /api/health.php
   envs:
   - key: DB_HOST
     scope: RUN_TIME
-    type: SECRET
+    value: ${inventox-db.HOSTNAME}
   - key: DB_NAME
     scope: RUN_TIME
-    type: SECRET
+    value: ${inventox-db.DATABASE}
   - key: DB_USER
     scope: RUN_TIME
-    type: SECRET
+    value: ${inventox-db.USERNAME}
   - key: DB_PASS
     scope: RUN_TIME
-    type: SECRET
+    value: ${inventox-db.PASSWORD}
   - key: DB_PORT
     scope: RUN_TIME
-    value: "25060"
-
+    value: ${inventox-db.PORT}
 databases:
 - name: inventox-db
   engine: MYSQL
   version: "8"
-  size: db-s-1vcpu-1gb
+  production: false
