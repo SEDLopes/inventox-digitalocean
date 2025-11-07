@@ -1,9 +1,14 @@
 # DigitalOcean Apache Configuration
-# O Heroku buildpack usa PHP-FPM automaticamente
+# O Heroku buildpack usa /app como DocumentRoot
 DirectoryIndex index.php index.html
 
 # Habilitar mod_rewrite
 RewriteEngine On
+
+# API routes - processar PHP diretamente
+RewriteCond %{REQUEST_URI} ^/api/(.*)$
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^api/(.*)$ api/$1 [L,QSA]
 
 # Redirecionar root para frontend
 RewriteCond %{REQUEST_URI} ^/$
