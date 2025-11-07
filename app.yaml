@@ -1,0 +1,36 @@
+name: inventox
+services:
+- name: web
+  source_dir: /
+  github:
+    repo: SandroLopes/inventox
+    branch: main
+  run_command: apache2-foreground
+  environment_slug: php
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  http_port: 80
+  routes:
+  - path: /
+  envs:
+  - key: DB_HOST
+    scope: RUN_TIME
+    type: SECRET
+  - key: DB_NAME
+    scope: RUN_TIME
+    type: SECRET
+  - key: DB_USER
+    scope: RUN_TIME
+    type: SECRET
+  - key: DB_PASS
+    scope: RUN_TIME
+    type: SECRET
+  - key: DB_PORT
+    scope: RUN_TIME
+    value: "25060"
+
+databases:
+- name: inventox-db
+  engine: MYSQL
+  version: "8"
+  size: db-s-1vcpu-1gb
