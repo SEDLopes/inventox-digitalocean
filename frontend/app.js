@@ -63,7 +63,7 @@ async function authenticatedFetch(url, options = {}) {
             'Content-Type': 'application/json',
             ...headers
         },
-        credentials: 'include'
+        method: 'GET'
     };
     
     return fetch(url, fetchOptions);
@@ -567,7 +567,7 @@ async function handleLogout() {
         // Chamar API de logout para destruir sessão no servidor
         await authenticatedFetch(`${API_BASE}/logout.php`, {
             method: 'POST',
-            credentials: 'include'
+            method: 'GET'
         }).catch(() => {
             // Ignorar erros, continuar com logout local
         });
@@ -687,7 +687,7 @@ async function handleCompanyChange() {
     // Carregar armazéns da empresa
     try {
         const response = await authenticatedFetch(`${API_BASE}/warehouses.php?company_id=${companyId}&active_only=true`, {
-            credentials: 'include'
+            method: 'GET'
         });
         
         if (!response.ok) {
@@ -823,7 +823,7 @@ async function confirmCountSetup() {
                     company_id: parseInt(companyId),
                     warehouse_id: parseInt(warehouseId)
                 }),
-                credentials: 'include'
+                method: 'GET'
             });
             
             if (!response.ok) {
@@ -1237,7 +1237,7 @@ async function handleBarcode(barcode) {
         const response = await authenticatedFetch(`${API_BASE}/get_item.php?barcode=${encodeURIComponent(barcode)}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            credentials: 'include' // Enviar cookies de sessão
+            method: 'GET' // Enviar cookies de sessão
         });
         
         if (!response.ok) {
@@ -1342,7 +1342,7 @@ async function createSession() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, description }),
-            credentials: 'include' // Enviar cookies de sessão
+            method: 'GET' // Enviar cookies de sessão
         });
         
         if (!response.ok) {
@@ -1426,7 +1426,7 @@ async function saveCount() {
                                 name: autoSessionName,
                                 description: 'Sessão criada automaticamente'
                             }),
-                            credentials: 'include'
+                            method: 'GET'
                         });
                         
                         if (createResponse.ok) {
@@ -1487,7 +1487,7 @@ async function saveCount() {
                 barcode: barcode,
                 counted_quantity: qty
             }),
-            credentials: 'include' // Enviar cookies de sessão
+            method: 'GET' // Enviar cookies de sessão
         });
         
         if (!response.ok) {
@@ -1539,7 +1539,7 @@ async function saveCount() {
 async function loadSessions() {
     try {
         const response = await authenticatedFetch(`${API_BASE}/session_count.php`, {
-            credentials: 'include' // Enviar cookies de sessão
+            method: 'GET' // Enviar cookies de sessão
         });
         
         if (!response.ok) {
@@ -2187,7 +2187,7 @@ async function saveCompany() {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-            credentials: 'include'
+            method: 'GET'
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
@@ -2321,7 +2321,7 @@ async function saveWarehouse() {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-            credentials: 'include'
+            method: 'GET'
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
@@ -2343,7 +2343,7 @@ async function deleteWarehouse(id) {
     if (!confirm('Eliminar este armazém?')) return;
     try {
         showLoading();
-        const resp = await authenticatedFetch(`${API_BASE}/warehouses.php?id=${id}`, { method: 'DELETE', credentials: 'include' });
+        const resp = await authenticatedFetch(`${API_BASE}/warehouses.php?id=${id}`, { method: 'DELETE', method: 'GET' });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
         hideLoading();
@@ -2373,7 +2373,7 @@ async function openItemModal(itemId = null) {
         try {
             showLoading();
             const response = await authenticatedFetch(`${API_BASE}/items.php?id=${itemId}`, {
-                credentials: 'include'
+                method: 'GET'
             });
             
             if (!response.ok) {
@@ -2471,7 +2471,7 @@ async function saveItem(e) {
             method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(itemData),
-            credentials: 'include'
+            method: 'GET'
         });
         
         if (!response.ok) {
@@ -2521,7 +2521,7 @@ async function deleteItem(itemId) {
         showLoading();
         const response = await authenticatedFetch(`${API_BASE}/items.php?id=${itemId}`, {
             method: 'DELETE',
-            credentials: 'include'
+            method: 'GET'
         });
         
         if (!response.ok) {
@@ -2560,7 +2560,7 @@ async function deleteItem(itemId) {
 async function loadCategoriesForSelect() {
     try {
         const response = await authenticatedFetch(`${API_BASE}/categories.php`, {
-            credentials: 'include'
+            method: 'GET'
         });
         
         if (!response.ok) {
@@ -2612,7 +2612,7 @@ async function loadCategories() {
         
         const url = `${API_BASE}/categories.php${params.toString() ? '?' + params.toString() : ''}`;
         const response = await fetch(url, {
-            credentials: 'include'
+            method: 'GET'
         });
         
         if (!response.ok) {
@@ -2693,7 +2693,7 @@ async function openCategoryModal(categoryId = null) {
         try {
             showLoading();
             const response = await authenticatedFetch(`${API_BASE}/categories.php?id=${categoryId}`, {
-                credentials: 'include'
+                method: 'GET'
             });
             
             if (!response.ok) {
@@ -2784,7 +2784,7 @@ async function saveCategory(e) {
             method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(categoryData),
-            credentials: 'include'
+            method: 'GET'
         });
         
         if (!response.ok) {
@@ -2835,7 +2835,7 @@ async function deleteCategory(categoryId) {
         showLoading();
         const response = await authenticatedFetch(`${API_BASE}/categories.php?id=${categoryId}`, {
             method: 'DELETE',
-            credentials: 'include'
+            method: 'GET'
         });
         
         if (!response.ok) {
@@ -2902,7 +2902,7 @@ async function loadStockHistory(page = 1) {
         }
         
         const response = await authenticatedFetch(`${API_BASE}/stock_history.php?${params.toString()}`, {
-            credentials: 'include'
+            method: 'GET'
         });
         
         if (!response.ok) {
@@ -3011,7 +3011,7 @@ async function loadUsers(page = 1, search = '') {
         }
         
         const response = await authenticatedFetch(`${API_BASE}/users.php?${params.toString()}`, {
-            credentials: 'include'
+            method: 'GET'
         });
         
         if (!response.ok) {
@@ -3129,7 +3129,7 @@ async function openUserModal(userId = null) {
         try {
             showLoading();
             const response = await authenticatedFetch(`${API_BASE}/users.php?id=${userId}`, {
-                credentials: 'include'
+                method: 'GET'
             });
             
             if (!response.ok) {
@@ -3230,7 +3230,7 @@ async function saveUser(e) {
             method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userData),
-            credentials: 'include'
+            method: 'GET'
         });
         
         if (!response.ok) {
@@ -3280,7 +3280,7 @@ async function deleteUser(userId) {
         showLoading();
         const response = await authenticatedFetch(`${API_BASE}/users.php?id=${userId}`, {
             method: 'DELETE',
-            credentials: 'include'
+            method: 'GET'
         });
         
         if (!response.ok) {
