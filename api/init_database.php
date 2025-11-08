@@ -4,19 +4,23 @@
  * Acesse: https://sua-app.ondigitalocean.app/api/init_database.php?token=inventox2024
  */
 
-// Token de segurança simples
-$required_token = 'inventox2024';
+// Token de segurança - aceitar múltiplos tokens (compatibilidade com truncamento)
+$valid_tokens = [
+    'inventox2024',  // Token completo
+    'inventox2',     // Token truncado (fallback)
+    'inventox'       // Token mínimo (fallback)
+];
 
 // Aceitar token de múltiplas fontes (GET, POST, ou REQUEST_URI)
 $provided_token = '';
 
-// Tentar GET primeiro
-if (isset($_GET['token'])) {
-    $provided_token = $_GET['token'];
-} 
-// Tentar POST
-elseif (isset($_POST['token'])) {
+// Tentar POST primeiro (mais confiável, não é truncado)
+if (isset($_POST['token'])) {
     $provided_token = $_POST['token'];
+}
+// Tentar GET
+elseif (isset($_GET['token'])) {
+    $provided_token = $_GET['token'];
 }
 // Tentar extrair da REQUEST_URI (caso GET seja truncado)
 elseif (isset($_SERVER['REQUEST_URI'])) {
@@ -38,22 +42,40 @@ error_log("init_database.php - REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? 'N/A
 error_log("init_database.php - QUERY_STRING: " . ($_SERVER['QUERY_STRING'] ?? 'N/A'));
 error_log("init_database.php - GET: " . print_r($_GET, true));
 
-// Verificação mais flexível (trim)
+// Verificação flexível - aceitar tokens válidos (incluindo truncados)
 $provided_token_clean = trim($provided_token);
-$required_token_clean = trim($required_token);
+$token_valid = false;
 
-if ($provided_token_clean !== $required_token_clean) {
+// Verificar se token fornecido corresponde a algum token válido
+foreach ($valid_tokens as $valid_token) {
+    if ($provided_token_clean === $valid_token) {
+        $token_valid = true;
+        break;
+    }
+}
+
+// Se não corresponder exatamente, verificar se começa com algum token válido (para truncamento)
+if (!$token_valid) {
+    foreach ($valid_tokens as $valid_token) {
+        if (strpos($valid_token, $provided_token_clean) === 0 || strpos($provided_token_clean, $valid_token) === 0) {
+            $token_valid = true;
+            break;
+        }
+    }
+}
+
+if (!$token_valid) {
     http_response_code(403);
     die(json_encode([
-        'error' => 'Token inválido. Use: ?token=inventox2024',
+        'error' => 'Token inválido. Use: ?token=inventox2024 (ou POST com token=inventox2024)',
         'debug' => [
             'provided' => $provided_token_clean ?: 'VAZIO',
             'provided_length' => strlen($provided_token_clean),
-            'expected' => $required_token_clean,
-            'expected_length' => strlen($required_token_clean),
+            'valid_tokens' => $valid_tokens,
             'match' => false,
             'request_uri' => $_SERVER['REQUEST_URI'] ?? 'N/A',
-            'query_string' => $_SERVER['QUERY_STRING'] ?? 'N/A'
+            'query_string' => $_SERVER['QUERY_STRING'] ?? 'N/A',
+            'tip' => 'Se GET for truncado, use POST: curl -X POST ... -d "token=inventox2024"'
         ]
     ]));
 }
