@@ -14,7 +14,9 @@
     <meta http-equiv="Permissions-Policy" content="camera=*">
     
     <title>InventoX - Sistema de Inventário</title>
+    <!-- Tailwind CSS via CDN (para desenvolvimento) -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- TODO: Em produção, usar Tailwind compilado via PostCSS -->
     <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
     <style>
         /* Mobile-specific styles */
@@ -49,18 +51,32 @@
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p class="text-gray-700">A carregar...</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Navigation -->
     <nav class="bg-blue-600 text-white p-4">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">InventoX</h1>
-            <div class="flex space-x-4">
-                <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded">Logout</button>
+            <div class="flex items-center space-x-3">
+                <img src="/frontend/assets/logo.svg" alt="InventoX Logo" class="h-8 w-8" onerror="this.style.display='none'">
+                <h1 class="text-xl font-bold">InventoX</h1>
+            </div>
+            <div class="flex space-x-4 items-center">
+                <span id="userInfo" class="text-sm hidden"></span>
+                <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded hidden">Logout</button>
             </div>
         </div>
     </nav>
 
     <!-- Login Screen -->
-    <div id="loginScreen" class="container mx-auto mt-8 p-4 max-w-md">
+    <div id="loginSection" class="container mx-auto mt-8 p-4 max-w-md">
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
             <form id="loginForm">
@@ -80,7 +96,7 @@
     </div>
 
     <!-- Main Dashboard -->
-    <div id="dashboard" class="container mx-auto mt-8 p-4 hidden">
+    <div id="dashboardSection" class="container mx-auto mt-8 p-4 hidden">
         <!-- Tab Navigation -->
         <div class="bg-white rounded-lg shadow-md mb-6">
             <div class="flex border-b">
@@ -157,6 +173,11 @@
                 <h3 class="text-lg font-bold mb-4">Itens Digitalizados</h3>
                 <div id="scannedItems" class="space-y-2">
                     <!-- Scanned items will appear here -->
+                </div>
+                <div class="mt-4">
+                    <button id="saveCountBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded hidden">
+                        Guardar Contagem
+                    </button>
                 </div>
             </div>
         </div>

@@ -70,16 +70,23 @@ async function checkAuth() {
 
 // Mostrar login
 function showLogin() {
-    document.getElementById('loginSection').classList.remove('hidden');
-    document.getElementById('dashboardSection').classList.add('hidden');
+    const loginSection = document.getElementById('loginSection');
+    const dashboardSection = document.getElementById('dashboardSection');
+    if (loginSection) loginSection.classList.remove('hidden');
+    if (dashboardSection) dashboardSection.classList.add('hidden');
 }
 
 // Mostrar dashboard
 function showDashboard(username) {
-    document.getElementById('loginSection').classList.add('hidden');
-    document.getElementById('dashboardSection').classList.remove('hidden');
-    document.getElementById('userInfo').textContent = `Olá, ${username}`;
-    document.getElementById('logoutBtn').classList.remove('hidden');
+    const loginSection = document.getElementById('loginSection');
+    const dashboardSection = document.getElementById('dashboardSection');
+    const userInfo = document.getElementById('userInfo');
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+    if (loginSection) loginSection.classList.add('hidden');
+    if (dashboardSection) dashboardSection.classList.remove('hidden');
+    if (userInfo) userInfo.textContent = `Olá, ${username}`;
+    if (logoutBtn) logoutBtn.classList.remove('hidden');
     
     // Verificar role do utilizador e mostrar tabs apropriadas
     const userRole = sessionStorage.getItem('userRole');
@@ -173,7 +180,10 @@ function initEventListeners() {
     });
     
     // Item count
-    document.getElementById('saveCountBtn').addEventListener('click', saveCount);
+    const saveCountBtn = document.getElementById('saveCountBtn');
+    if (saveCountBtn) {
+        saveCountBtn.addEventListener('click', saveCount);
+    }
     
     // Import
     document.getElementById('importFile').addEventListener('change', (e) => {
@@ -1689,11 +1699,13 @@ async function uploadFile() {
 
 // Utilitários
 function showLoading() {
-    document.getElementById('loadingOverlay').classList.remove('hidden');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) loadingOverlay.classList.remove('hidden');
 }
 
 function hideLoading() {
-    document.getElementById('loadingOverlay').classList.add('hidden');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) loadingOverlay.classList.add('hidden');
 }
 
 function showToast(message, type = 'success') {
