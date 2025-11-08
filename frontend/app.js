@@ -1697,7 +1697,8 @@ async function uploadFile() {
                 ${errorsHtml}
             `;
             fileInput.value = '';
-            document.getElementById('uploadBtn').disabled = true;
+            const uploadBtn2 = document.getElementById('uploadBtn');
+            if (uploadBtn2) uploadBtn2.disabled = true;
         } else {
             resultDiv.className = 'p-4 bg-red-50 rounded-lg text-red-800';
             resultDiv.innerHTML = `<p>${data.message}</p>`;
