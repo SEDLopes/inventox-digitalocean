@@ -1,9 +1,9 @@
-# Railway Dockerfile - CORRIGIDO: Adicionar ao apache2.conf, não substituir
+# Railway Dockerfile - CORRIGIDO: Sem Listen 80 duplicado
 FROM php:8.1-apache
 
 # Metadados
 LABEL maintainer="InventoX Railway"
-LABEL description="InventoX PHP Application - Apache Config Fixed"
+LABEL description="InventoX PHP Application - Apache Fixed"
 
 # Instalar dependências essenciais
 RUN apt-get update && apt-get install -y \
@@ -24,12 +24,11 @@ RUN apt-get update && apt-get install -y \
 RUN a2enmod rewrite
 RUN a2enmod headers
 
-# CONFIGURAÇÃO APACHE - ADICIONAR, NÃO SUBSTITUIR
+# CONFIGURAÇÃO APACHE - ADICIONAR, SEM Listen 80 (já existe)
 # Adicionar configurações ao final do apache2.conf existente
 RUN echo '' >> /etc/apache2/apache2.conf && \
     echo '# InventoX Railway Configuration' >> /etc/apache2/apache2.conf && \
     echo 'ServerName localhost' >> /etc/apache2/apache2.conf && \
-    echo 'Listen 80' >> /etc/apache2/apache2.conf && \
     echo '' >> /etc/apache2/apache2.conf && \
     echo '<VirtualHost *:80>' >> /etc/apache2/apache2.conf && \
     echo '    ServerAdmin webmaster@localhost' >> /etc/apache2/apache2.conf && \
