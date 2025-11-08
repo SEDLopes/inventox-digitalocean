@@ -1926,8 +1926,7 @@ async function loadDashboard() {
 // Items Management Functions
 // ==========================================
 
-let currentItemsPage = 1;
-let currentItemsSearch = '';
+// Variáveis de paginação e pesquisa (declaradas mais abaixo)
 
 // Carregar Artigos
 async function loadItems(page = 1, search = '') {
@@ -2820,7 +2819,7 @@ async function deleteCategory(categoryId) {
 // Stock History Functions
 // ==========================================
 
-let currentHistoryPage = 1;
+// currentHistoryPage já declarado no topo do arquivo
 
 // Carregar Histórico de Movimentações
 async function loadStockHistory(page = 1) {
@@ -2938,8 +2937,7 @@ async function loadStockHistory(page = 1) {
 // Users Management Functions (Admin Only)
 // ==========================================
 
-let currentUsersPage = 1;
-let currentUsersSearch = '';
+// currentUsersPage e currentUsersSearch já declarados no topo do arquivo
 
 // Carregar Utilizadores
 async function loadUsers(page = 1, search = '') {
