@@ -271,9 +271,16 @@ try {
     }
 } catch (PDOException $e) {
     error_log("Session count error: " . $e->getMessage());
+    error_log("Session count error trace: " . $e->getTraceAsString());
     sendJsonResponse([
         'success' => false,
-        'message' => 'Erro ao processar pedido'
+        'message' => 'Erro ao processar pedido: ' . $e->getMessage()
+    ], 500);
+} catch (Exception $e) {
+    error_log("Session count general error: " . $e->getMessage());
+    sendJsonResponse([
+        'success' => false,
+        'message' => 'Erro ao processar pedido: ' . $e->getMessage()
     ], 500);
 }
 
