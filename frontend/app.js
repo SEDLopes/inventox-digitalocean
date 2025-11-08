@@ -51,19 +51,21 @@ async function authenticatedFetch(url, options = {}) {
     }
     
     // Adicionar headers de autenticação
-    const headers = options.headers || {};
+    const headers = { ...(options.headers || {}) };
     if (authToken) {
         headers['Authorization'] = `Bearer ${authToken}`;
     }
     
-    // Garantir que credentials está incluído
+    // Não sobrescrever Content-Type se já estiver definido (especialmente para FormData)
+    if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
+        headers['Content-Type'] = 'application/json';
+    }
+    
+    // Garantir que credentials está incluído e preservar method do options
     const fetchOptions = {
         ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...headers
-        },
-        method: 'GET'
+        headers,
+        credentials: 'include'
     };
     
     return fetch(url, fetchOptions);
