@@ -2343,7 +2343,7 @@ async function deleteWarehouse(id) {
     if (!confirm('Eliminar este armazém?')) return;
     try {
         showLoading();
-        const resp = await authenticatedFetch(`${API_BASE}/warehouses.php?id=${id}`, { method: 'DELETE', method: 'GET' });
+        const resp = await authenticatedFetch(`${API_BASE}/warehouses.php?id=${id}`, { method: 'DELETE' });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
         hideLoading();
@@ -2611,7 +2611,7 @@ async function loadCategories() {
         }
         
         const url = `${API_BASE}/categories.php${params.toString() ? '?' + params.toString() : ''}`;
-        const response = await fetch(url, {
+        const response = await authenticatedFetch(url, {
             method: 'GET'
         });
         
@@ -2834,8 +2834,7 @@ async function deleteCategory(categoryId) {
     try {
         showLoading();
         const response = await authenticatedFetch(`${API_BASE}/categories.php?id=${categoryId}`, {
-            method: 'DELETE',
-            method: 'GET'
+            method: 'DELETE'
         });
         
         if (!response.ok) {
@@ -3279,8 +3278,7 @@ async function deleteUser(userId) {
     try {
         showLoading();
         const response = await authenticatedFetch(`${API_BASE}/users.php?id=${userId}`, {
-            method: 'DELETE',
-            method: 'GET'
+            method: 'DELETE'
         });
         
         if (!response.ok) {
