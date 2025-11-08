@@ -1,18 +1,18 @@
+# Nixpacks configuration for Railway
 [phases.setup]
-nixPkgs = ["...", "php82", "php82Extensions.mysqli", "php82Extensions.pdo_mysql", "python3", "python3Packages.pip"]
+nixPkgs = ["php81", "php81Packages.composer", "nodejs", "python3"]
 
 [phases.install]
 cmds = [
-    "pip install pandas sqlalchemy pymysql openpyxl python-dotenv"
+  "php -v",
+  "composer --version || echo 'Composer not needed'",
+  "ls -la"
 ]
 
 [phases.build]
 cmds = [
-    "cp -r frontend/* .",
-    "cp -r api .",
-    "cp -r scripts .",
-    "cp db.sql ."
+  "echo 'Build phase - PHP app ready'"
 ]
 
 [start]
-cmd = "apache2-foreground"
+cmd = "php -S 0.0.0.0:$PORT -t ."
