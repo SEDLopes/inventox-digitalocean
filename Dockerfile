@@ -1,9 +1,9 @@
-# Railway Dockerfile - SOLUÇÃO ROBUSTA HEALTHCHECK
+# Railway Dockerfile - CORRIGIDO: Sem módulo php8
 FROM php:8.1-apache
 
 # Metadados
 LABEL maintainer="InventoX Railway"
-LABEL description="InventoX PHP Application - Healthcheck Optimized"
+LABEL description="InventoX PHP Application - Build Fixed"
 
 # Instalar dependências essenciais
 RUN apt-get update && apt-get install -y \
@@ -20,10 +20,9 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Configurar Apache modules
+# Configurar Apache modules (SEM php8 - já integrado)
 RUN a2enmod rewrite
 RUN a2enmod headers
-RUN a2enmod php8
 
 # CONFIGURAÇÃO APACHE ROBUSTA
 # Configurar ServerName para evitar warnings
