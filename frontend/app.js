@@ -1685,6 +1685,9 @@ async function uploadFile() {
             const errorsHtml = (data.errors && data.errors.length)
                 ? `<div class="mt-2 text-red-700"><p class="font-semibold mb-1">Ocorreram alguns avisos/erros:</p><ul class="list-disc ml-5 text-sm">${data.errors.slice(0,10).map(e => `<li>${e}</li>`).join('')}</ul>${data.errors.length>10?`<p class=\"text-xs mt-1\">(+${data.errors.length-10} mais)</p>`:''}</div>`
                 : '';
+            const uploadBtn = document.getElementById('uploadBtn');
+            if (uploadBtn) uploadBtn.disabled = true;
+            
             resultDiv.innerHTML = `
                 <p class="font-bold">Importação concluída com sucesso!</p>
                 <p class="text-sm mt-2">
