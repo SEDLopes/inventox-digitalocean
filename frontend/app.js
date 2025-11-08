@@ -703,7 +703,7 @@ async function handleWarehouseChange() {
     // Carregar sessões abertas para a empresa e armazém
     try {
         const response = await fetch(`${API_BASE}/session_count.php`, {
-            method: 'GET'
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -1200,7 +1200,7 @@ async function handleBarcode(barcode) {
         
         // Buscar item pelo barcode
         const response = await fetch(`${API_BASE}/get_item.php?barcode=${encodeURIComponent(barcode)}`, {
-            method: 'GET',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             method: 'GET' // Enviar cookies de sessão
         });
@@ -1508,7 +1508,7 @@ async function saveCount() {
 async function loadSessions() {
     try {
         const response = await fetch(`${API_BASE}/session_count.php`, {
-            method: 'GET' // Enviar cookies de sessão
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -1583,7 +1583,7 @@ async function loadSessionInfo(sessionId) {
     
     try {
         const response = await fetch(`${API_BASE}/session_count.php?id=${sessionId}`, {
-            method: 'GET'
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -1761,7 +1761,8 @@ async function uploadFile() {
         showLoading();
         const response = await fetch(`${API_BASE}/items_import.php`, {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'include'
         });
         
         const responseText = await response.text();
@@ -1868,7 +1869,7 @@ function showToast(message, type = 'success') {
 async function loadDashboard() {
     try {
         const response = await fetch(`${API_BASE}/stats.php`, {
-            method: 'GET'
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -1974,7 +1975,7 @@ async function loadItems(page = 1, search = '') {
         }
         
         const response = await fetch(`${API_BASE}/items.php?${params.toString()}`, {
-            method: 'GET'
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -2178,7 +2179,10 @@ async function deleteCompany(id) {
     if (!confirm('Eliminar esta empresa?')) return;
     try {
         showLoading();
-        const resp = await fetch(`${API_BASE}/companies.php?id=${id}`, { method: 'DELETE' });
+        const resp = await fetch(`${API_BASE}/companies.php?id=${id}`, { 
+            method: 'DELETE',
+            credentials: 'include'
+        });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
         hideLoading();
@@ -2312,7 +2316,10 @@ async function deleteWarehouse(id) {
     if (!confirm('Eliminar este armazém?')) return;
     try {
         showLoading();
-        const resp = await fetch(`${API_BASE}/warehouses.php?id=${id}`, { method: 'DELETE' });
+        const resp = await fetch(`${API_BASE}/warehouses.php?id=${id}`, { 
+            method: 'DELETE',
+            credentials: 'include'
+        });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
         hideLoading();
@@ -2342,7 +2349,7 @@ async function openItemModal(itemId = null) {
         try {
             showLoading();
             const response = await fetch(`${API_BASE}/items.php?id=${itemId}`, {
-                method: 'GET'
+                credentials: 'include'
             });
             
             if (!response.ok) {
@@ -2490,7 +2497,7 @@ async function deleteItem(itemId) {
         showLoading();
         const response = await fetch(`${API_BASE}/items.php?id=${itemId}`, {
             method: 'DELETE',
-            method: 'GET'
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -2529,7 +2536,7 @@ async function deleteItem(itemId) {
 async function loadCategoriesForSelect() {
     try {
         const response = await fetch(`${API_BASE}/categories.php`, {
-            method: 'GET'
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -2662,7 +2669,7 @@ async function openCategoryModal(categoryId = null) {
         try {
             showLoading();
             const response = await fetch(`${API_BASE}/categories.php?id=${categoryId}`, {
-                method: 'GET'
+                credentials: 'include'
             });
             
             if (!response.ok) {
@@ -2803,7 +2810,8 @@ async function deleteCategory(categoryId) {
     try {
         showLoading();
         const response = await fetch(`${API_BASE}/categories.php?id=${categoryId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -2870,7 +2878,7 @@ async function loadStockHistory(page = 1) {
         }
         
         const response = await fetch(`${API_BASE}/stock_history.php?${params.toString()}`, {
-            method: 'GET'
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -2979,7 +2987,7 @@ async function loadUsers(page = 1, search = '') {
         }
         
         const response = await fetch(`${API_BASE}/users.php?${params.toString()}`, {
-            method: 'GET'
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -3097,7 +3105,7 @@ async function openUserModal(userId = null) {
         try {
             showLoading();
             const response = await fetch(`${API_BASE}/users.php?id=${userId}`, {
-                method: 'GET'
+                credentials: 'include'
             });
             
             if (!response.ok) {
@@ -3247,7 +3255,8 @@ async function deleteUser(userId) {
     try {
         showLoading();
         const response = await fetch(`${API_BASE}/users.php?id=${userId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include'
         });
         
         if (!response.ok) {
