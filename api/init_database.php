@@ -37,7 +37,7 @@ elseif (isset($_SERVER['QUERY_STRING'])) {
 
 // Debug (remover em produção se necessário)
 error_log("init_database.php - Token recebido: " . ($provided_token ?: 'VAZIO'));
-error_log("init_database.php - Token esperado: " . $required_token);
+error_log("init_database.php - Tokens válidos: " . implode(', ', $valid_tokens));
 error_log("init_database.php - REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? 'N/A'));
 error_log("init_database.php - QUERY_STRING: " . ($_SERVER['QUERY_STRING'] ?? 'N/A'));
 error_log("init_database.php - GET: " . print_r($_GET, true));
