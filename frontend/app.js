@@ -226,8 +226,14 @@ function initEventListeners() {
     }
     
     // Categories management
-    document.getElementById('createCategoryBtn').addEventListener('click', () => openCategoryModal());
-    document.getElementById('categoryForm').addEventListener('submit', saveCategory);
+    const createCategoryBtn = document.getElementById('createCategoryBtn');
+    if (createCategoryBtn) {
+        createCategoryBtn.addEventListener('click', () => openCategoryModal());
+    }
+    const categoryForm = document.getElementById('categoryForm');
+    if (categoryForm) {
+        categoryForm.addEventListener('submit', saveCategory);
+    }
     
     // Users management (admin only)
     const createUserBtn = document.getElementById('createUserBtn');
@@ -2538,6 +2544,11 @@ async function openCategoryModal(categoryId = null) {
     const form = document.getElementById('categoryForm');
     const modalTitle = document.getElementById('categoryModalTitle');
     
+    if (!modal || !form || !modalTitle) {
+        console.warn('Elementos de categoria não encontrados');
+        return;
+    }
+    
     // Limpar formulário
     form.reset();
     document.getElementById('categoryId').value = '';
@@ -2590,8 +2601,10 @@ async function openCategoryModal(categoryId = null) {
 
 // Fechar Modal de Categoria
 function closeCategoryModal() {
-    document.getElementById('categoryModal').classList.add('hidden');
-    document.getElementById('categoryForm').reset();
+    const modal = document.getElementById('categoryModal');
+    const form = document.getElementById('categoryForm');
+    if (modal) modal.classList.add('hidden');
+    if (form) form.reset();
 }
 
 // Guardar Categoria
@@ -2610,7 +2623,7 @@ async function saveCategory(e) {
     
     const categoryData = {
         name: name,
-        description: document.getElementById('categoryDescription').value
+        description: categoryDescriptionEl.value
     };
     
     if (categoryId) {
