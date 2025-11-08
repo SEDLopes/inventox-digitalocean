@@ -6,16 +6,39 @@
 
 // Token de segurança simples
 $required_token = 'inventox2024';
-// Aceitar token de GET ou POST
-$provided_token = $_GET['token'] ?? $_POST['token'] ?? '';
+
+// Aceitar token de múltiplas fontes (GET, POST, ou REQUEST_URI)
+$provided_token = '';
+
+// Tentar GET primeiro
+if (isset($_GET['token'])) {
+    $provided_token = $_GET['token'];
+} 
+// Tentar POST
+elseif (isset($_POST['token'])) {
+    $provided_token = $_POST['token'];
+}
+// Tentar extrair da REQUEST_URI (caso GET seja truncado)
+elseif (isset($_SERVER['REQUEST_URI'])) {
+    $uri = $_SERVER['REQUEST_URI'];
+    if (preg_match('/[?&]token=([^&]+)/', $uri, $matches)) {
+        $provided_token = urldecode($matches[1]);
+    }
+}
+// Tentar QUERY_STRING diretamente
+elseif (isset($_SERVER['QUERY_STRING'])) {
+    parse_str($_SERVER['QUERY_STRING'], $query_params);
+    $provided_token = $query_params['token'] ?? '';
+}
 
 // Debug (remover em produção se necessário)
 error_log("init_database.php - Token recebido: " . ($provided_token ?: 'VAZIO'));
 error_log("init_database.php - Token esperado: " . $required_token);
+error_log("init_database.php - REQUEST_URI: " . ($_SERVER['REQUEST_URI'] ?? 'N/A'));
+error_log("init_database.php - QUERY_STRING: " . ($_SERVER['QUERY_STRING'] ?? 'N/A'));
 error_log("init_database.php - GET: " . print_r($_GET, true));
-error_log("init_database.php - POST: " . print_r($_POST, true));
 
-// Verificação mais flexível (trim e case-insensitive para debug)
+// Verificação mais flexível (trim)
 $provided_token_clean = trim($provided_token);
 $required_token_clean = trim($required_token);
 
@@ -25,8 +48,12 @@ if ($provided_token_clean !== $required_token_clean) {
         'error' => 'Token inválido. Use: ?token=inventox2024',
         'debug' => [
             'provided' => $provided_token_clean ?: 'VAZIO',
+            'provided_length' => strlen($provided_token_clean),
             'expected' => $required_token_clean,
-            'match' => false
+            'expected_length' => strlen($required_token_clean),
+            'match' => false,
+            'request_uri' => $_SERVER['REQUEST_URI'] ?? 'N/A',
+            'query_string' => $_SERVER['QUERY_STRING'] ?? 'N/A'
         ]
     ]));
 }
