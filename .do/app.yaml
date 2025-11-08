@@ -6,6 +6,8 @@ services:
     repo: SEDLopes/inventox-app
     branch: main
   dockerfile_path: Dockerfile
+  build_command: docker build -t inventox .
+  run_command: docker run -p 80:80 inventox
   instance_count: 1
   instance_size_slug: basic-xxs
   http_port: 80
