@@ -216,11 +216,14 @@ function initEventListeners() {
     if (itemForm) itemForm.addEventListener('submit', saveItem);
     const searchItemsBtn = document.getElementById('searchItemsBtn');
     if (searchItemsBtn) searchItemsBtn.addEventListener('click', () => loadItems(1));
-    document.getElementById('itemsSearch').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            loadItems(1);
-        }
-    });
+    const itemsSearch = document.getElementById('itemsSearch');
+    if (itemsSearch) {
+        itemsSearch.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                loadItems(1);
+            }
+        });
+    }
     
     // Categories management
     document.getElementById('createCategoryBtn').addEventListener('click', () => openCategoryModal());
@@ -397,8 +400,11 @@ async function handleLogin(e) {
     
     // Validação básica
     if (!username || !password) {
-        document.getElementById('loginError').textContent = 'Username e password são obrigatórios';
-        document.getElementById('loginError').classList.remove('hidden');
+        const loginError = document.getElementById('loginError');
+        if (loginError) {
+            loginError.textContent = 'Username e password são obrigatórios';
+            loginError.classList.remove('hidden');
+        }
         return;
     }
     
@@ -447,16 +453,22 @@ async function handleLogin(e) {
                 showDashboard(data.user.username);
             }, 100);
         } else {
-            document.getElementById('loginError').textContent = data.message || 'Erro ao fazer login';
-            document.getElementById('loginError').classList.remove('hidden');
+            const loginError = document.getElementById('loginError');
+            if (loginError) {
+                loginError.textContent = data.message || 'Erro ao fazer login';
+                loginError.classList.remove('hidden');
+            }
         }
     } catch (error) {
         hideLoading();
         const errorMessage = error.message || 'Erro ao fazer login';
         showToast(errorMessage, 'error');
         console.error('Erro no login:', error);
-        document.getElementById('loginError').textContent = errorMessage;
-        document.getElementById('loginError').classList.remove('hidden');
+        const loginError = document.getElementById('loginError');
+        if (loginError) {
+            loginError.textContent = errorMessage;
+            loginError.classList.remove('hidden');
+        }
     }
 }
 
