@@ -188,13 +188,48 @@ function initEventListeners() {
     });
     
     // Session
-    document.getElementById('createSessionBtn').addEventListener('click', createSession);
-    document.getElementById('sessionSelect').addEventListener('change', (e) => {
-        currentSessionId = e.target.value;
-        if (currentSessionId) {
-            loadSessionInfo(currentSessionId);
-        }
-    });
+    const createSessionBtn = document.getElementById('createSessionBtn');
+    if (createSessionBtn) {
+        createSessionBtn.addEventListener('click', () => {
+            const modal = document.getElementById('createSessionModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
+        });
+    }
+    
+    const createSessionForm = document.getElementById('createSessionForm');
+    if (createSessionForm) {
+        createSessionForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            createSession();
+        });
+    }
+    
+    const closeCreateSessionBtn = document.getElementById('closeCreateSession');
+    const cancelCreateSessionBtn = document.getElementById('cancelCreateSession');
+    if (closeCreateSessionBtn) {
+        closeCreateSessionBtn.addEventListener('click', () => {
+            const modal = document.getElementById('createSessionModal');
+            if (modal) modal.classList.add('hidden');
+        });
+    }
+    if (cancelCreateSessionBtn) {
+        cancelCreateSessionBtn.addEventListener('click', () => {
+            const modal = document.getElementById('createSessionModal');
+            if (modal) modal.classList.add('hidden');
+        });
+    }
+    
+    const sessionSelect = document.getElementById('sessionSelect');
+    if (sessionSelect) {
+        sessionSelect.addEventListener('change', (e) => {
+            currentSessionId = e.target.value;
+            if (currentSessionId) {
+                loadSessionInfo(currentSessionId);
+            }
+        });
+    }
     
     // Item count
     const saveCountBtn = document.getElementById('saveCountBtn');
