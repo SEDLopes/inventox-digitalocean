@@ -9,6 +9,9 @@ require_once __DIR__ . '/db.php';
 // Verificar autenticação (requireAuth já inicia a sessão se necessário)
 requireAuth();
 
+// Rate limiting
+requireRateLimit();
+
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     sendJsonResponse([
         'success' => false,
@@ -26,9 +29,19 @@ try {
     $stmt = $db->query("SELECT COUNT(*) as total FROM items");
     $stats['total_items'] = intval($stmt->fetch()['total']);
     
-    // Artigos com stock baixo
-    $stmt = $db->query("SELECT COUNT(*) as total FROM items WHERE quantity <= min_quantity");
-    $stats['low_stock_items'] = intval($stmt->fetch()['total']);
+    // Artigos com stock baixo (verificar se coluna existe)
+    try {
+        $checkColumn = $db->query("SHOW COLUMNS FROM items LIKE 'min_quantity'");
+        if ($checkColumn->rowCount() > 0) {
+            $stmt = $db->query("SELECT COUNT(*) as total FROM items WHERE quantity <= min_quantity");
+            $stats['low_stock_items'] = intval($stmt->fetch()['total']);
+        } else {
+            // Fallback se coluna não existir
+            $stats['low_stock_items'] = 0;
+        }
+    } catch (Exception $e) {
+        $stats['low_stock_items'] = 0;
+    }
     
     // Total de categorias
     $stmt = $db->query("SELECT COUNT(*) as total FROM categories");
@@ -69,21 +82,31 @@ try {
     ");
     $stats['top_categories'] = $stmt->fetchAll();
     
-    // Artigos com stock mais baixo
-    $stmt = $db->query("
-        SELECT 
-            id,
-            barcode,
-            name,
-            quantity,
-            min_quantity,
-            (min_quantity - quantity) as shortage
-        FROM items
-        WHERE quantity <= min_quantity
-        ORDER BY (min_quantity - quantity) DESC
-        LIMIT 10
-    ");
-    $stats['low_stock_list'] = $stmt->fetchAll();
+    // Artigos com stock mais baixo (verificar se coluna existe)
+    try {
+        $checkColumn = $db->query("SHOW COLUMNS FROM items LIKE 'min_quantity'");
+        if ($checkColumn->rowCount() > 0) {
+            $stmt = $db->query("
+                SELECT 
+                    id,
+                    barcode,
+                    name,
+                    quantity,
+                    min_quantity,
+                    (min_quantity - quantity) as shortage
+                FROM items
+                WHERE quantity <= min_quantity
+                ORDER BY (min_quantity - quantity) DESC
+                LIMIT 10
+            ");
+            $stats['low_stock_list'] = $stmt->fetchAll();
+        } else {
+            // Fallback se coluna não existir
+            $stats['low_stock_list'] = [];
+        }
+    } catch (Exception $e) {
+        $stats['low_stock_list'] = [];
+    }
     
     // Últimas sessões de inventário
     $stmt = $db->query("

@@ -73,11 +73,27 @@ function handleGetCompanies($input) {
             ]);
         }
         
-        // Listar todas as empresas
+        // Listar todas as empresas (verificar se colunas existem)
         $activeOnly = isset($_GET['active_only']) && $_GET['active_only'] === 'true';
         
-        $query = "SELECT id, name, code, address, phone, email, tax_id, is_active, created_at, updated_at FROM companies";
-        if ($activeOnly) {
+        // Verificar quais colunas existem
+        $columns = [];
+        $checkColumns = $db->query("SHOW COLUMNS FROM companies");
+        $existingColumns = $checkColumns->fetchAll(PDO::FETCH_COLUMN);
+        
+        // Construir SELECT com apenas colunas existentes
+        $selectFields = ['id', 'name'];
+        if (in_array('code', $existingColumns)) $selectFields[] = 'code';
+        if (in_array('address', $existingColumns)) $selectFields[] = 'address';
+        if (in_array('phone', $existingColumns)) $selectFields[] = 'phone';
+        if (in_array('email', $existingColumns)) $selectFields[] = 'email';
+        if (in_array('tax_id', $existingColumns)) $selectFields[] = 'tax_id';
+        if (in_array('is_active', $existingColumns)) $selectFields[] = 'is_active';
+        if (in_array('created_at', $existingColumns)) $selectFields[] = 'created_at';
+        if (in_array('updated_at', $existingColumns)) $selectFields[] = 'updated_at';
+        
+        $query = "SELECT " . implode(', ', $selectFields) . " FROM companies";
+        if ($activeOnly && in_array('is_active', $existingColumns)) {
             $query .= " WHERE is_active = 1";
         }
         $query .= " ORDER BY name";
