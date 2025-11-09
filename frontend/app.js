@@ -190,9 +190,16 @@ function initEventListeners() {
     // Session
     const createSessionBtn = document.getElementById('createSessionBtn');
     if (createSessionBtn) {
-        createSessionBtn.addEventListener('click', () => {
+        createSessionBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             const modal = document.getElementById('createSessionModal');
             if (modal) {
+                // Limpar formulário antes de abrir
+                const form = document.getElementById('createSessionForm');
+                if (form) {
+                    form.reset();
+                }
                 modal.classList.remove('hidden');
             }
         });
@@ -202,6 +209,7 @@ function initEventListeners() {
     if (createSessionForm) {
         createSessionForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             createSession();
         });
     }
@@ -1342,8 +1350,10 @@ async function createSession() {
     const name = nameEl.value.trim();
     const description = descriptionEl.value.trim();
     
-    // Validação básica
+    // Validação básica - só validar se o formulário foi realmente submetido
     if (!name || name.length === 0) {
+        // Focar no campo de nome para indicar o erro
+        nameEl.focus();
         showToast('Nome da sessão é obrigatório', 'error');
         return;
     }
