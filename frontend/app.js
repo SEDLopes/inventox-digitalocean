@@ -590,7 +590,7 @@ async function handleLogout() {
         // Chamar API de logout para destruir sessão no servidor
         await fetch(`${API_BASE}/logout.php`, {
             method: 'POST',
-            method: 'GET'
+            credentials: 'include'
         }).catch(() => {
             // Ignorar erros, continuar com logout local
         });
@@ -667,7 +667,8 @@ window.closeCountSetupModal = closeCountSetupModal;
 async function loadCompaniesForSetup() {
     try {
         const response = await fetch(`${API_BASE}/companies.php?active_only=true`, {
-            method: 'GET'
+            method: 'GET',
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -710,7 +711,8 @@ async function handleCompanyChange() {
     // Carregar armazéns da empresa
     try {
         const response = await fetch(`${API_BASE}/warehouses.php?company_id=${companyId}&active_only=true`, {
-            method: 'GET'
+            method: 'GET',
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -1432,7 +1434,8 @@ async function saveCount() {
         // Tentar carregar sessões e encontrar uma aberta
         try {
             const sessionsResponse = await fetch(`${API_BASE}/session_count.php`, {
-                method: 'GET'
+                method: 'GET',
+                credentials: 'include'
             });
             
             if (sessionsResponse.ok) {
@@ -1519,7 +1522,7 @@ async function saveCount() {
                 barcode: barcode,
                 counted_quantity: qty
             }),
-            method: 'GET' // Enviar cookies de sessão
+            credentials: 'include' // Enviar cookies de sessão
         });
         
         if (!response.ok) {
@@ -2361,7 +2364,7 @@ async function saveWarehouse() {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-            method: 'GET'
+            credentials: 'include'
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
@@ -2514,7 +2517,7 @@ async function saveItem(e) {
             method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(itemData),
-            method: 'GET'
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -2655,7 +2658,8 @@ async function loadCategories() {
         
         const url = `${API_BASE}/categories.php${params.toString() ? '?' + params.toString() : ''}`;
         const response = await fetch(url, {
-            method: 'GET'
+            method: 'GET',
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -2827,7 +2831,7 @@ async function saveCategory(e) {
             method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(categoryData),
-            method: 'GET'
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -3273,7 +3277,7 @@ async function saveUser(e) {
             method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userData),
-            method: 'GET'
+            credentials: 'include'
         });
         
         if (!response.ok) {
