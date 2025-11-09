@@ -893,8 +893,8 @@ async function confirmCountSetup() {
     // Definir sessão atual e iniciar scanner
     currentSessionId = finalSessionId;
     
-    // Atualizar informação da sessão na UI
-    await loadSessionInfo(finalSessionId);
+    // Atualizar informação da sessão na UI (sem mostrar o card de detalhes)
+    await loadSessionInfo(finalSessionId, false);
     
     hideLoading();
     closeCountSetupModal();
@@ -1825,13 +1825,8 @@ async function loadSessionInfo(sessionId) {
                 sessionSelect.value = sessionId;
             }
             
-            // Mudar para o tab de sessões primeiro
-            switchTab('sessions');
-            
-            // Aguardar um pouco para garantir que o tab está visível
-            setTimeout(() => {
-                showSessionDetails(session, session.counts || []);
-            }, 100);
+            // Mostrar detalhes da sessão apenas se solicitado
+            // (não mostrar quando o scanner é iniciado)
         }
     } catch (error) {
         console.error('Erro ao carregar sessão:', error);
