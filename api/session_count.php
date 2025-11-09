@@ -9,9 +9,6 @@ require_once __DIR__ . '/db.php';
 // Verificar autenticação (requireAuth já inicia a sessão se necessário)
 requireAuth();
 
-// Rate limiting
-requireRateLimit();
-
 $method = $_SERVER['REQUEST_METHOD'];
 $db = getDB();
 

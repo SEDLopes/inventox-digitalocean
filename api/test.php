@@ -1,5 +1,13 @@
 <?php
-// Teste simples para verificar se o PHP está funcionando
+/**
+ * Teste simples para verificar se o PHP está funcionando
+ * 
+ * ⚠️ ATENÇÃO: Este endpoint é apenas para debug/teste
+ * Em produção, requer autenticação admin
+ */
+
+require_once __DIR__ . '/protect_debug_endpoints.php';
+
 header('Content-Type: text/plain; charset=utf-8');
 
 echo "✅ PHP está funcionando!\n";

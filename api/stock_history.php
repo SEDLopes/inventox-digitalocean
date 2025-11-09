@@ -9,9 +9,6 @@ require_once __DIR__ . '/db.php';
 // Verificar autenticação
 requireAuth();
 
-// Rate limiting
-requireRateLimit();
-
 $method = $_SERVER['REQUEST_METHOD'];
 
 // Apenas GET permitido

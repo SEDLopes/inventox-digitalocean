@@ -2,8 +2,12 @@
 /**
  * InventoX - Test Session API
  * Endpoint temporário para testar configuração de sessão
+ * 
+ * ⚠️ ATENÇÃO: Este endpoint é apenas para debug/teste
+ * Em produção, requer autenticação admin
  */
 
+require_once __DIR__ . '/protect_debug_endpoints.php';
 require_once __DIR__ . '/db.php';
 
 // Configurar cookies ANTES de session_start()

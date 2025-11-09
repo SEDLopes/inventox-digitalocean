@@ -2,7 +2,12 @@
 /**
  * InventoX - Debug Session API
  * Endpoint para diagnosticar problemas de sessão
+ * 
+ * ⚠️ ATENÇÃO: Este endpoint é apenas para debug/teste
+ * Em produção, requer autenticação admin
  */
+
+require_once __DIR__ . '/protect_debug_endpoints.php';
 
 // Headers para debug
 header('Content-Type: application/json; charset=utf-8');

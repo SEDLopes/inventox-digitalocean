@@ -19,9 +19,17 @@ try {
     if (isset($_ENV['DATABASE_URL']) || (isset($_ENV['DB_HOST']) && isset($_ENV['DB_NAME']))) {
         try {
             require_once 'db.php';
-            $db = getDBConnection();
+            $db = getDB();
             $stmt = $db->query("SELECT 1");
             $status['services']['database'] = 'connected';
+            
+            // Verificar se tabelas principais existem
+            try {
+                $stmt = $db->query("SELECT COUNT(*) as count FROM users LIMIT 1");
+                $status['services']['database_tables'] = 'ok';
+            } catch (Exception $e) {
+                $status['services']['database_tables'] = 'error';
+            }
         } catch (Exception $e) {
             $status['services']['database'] = 'disconnected';
             $status['database_error'] = $e->getMessage();
@@ -31,10 +39,34 @@ try {
     }
     
     // Verificar se as pastas necessárias existem
-    $status['services']['uploads'] = is_dir('../uploads') && is_writable('../uploads') ? 'ready' : 'not_ready';
+    $uploadsPath = __DIR__ . '/../uploads';
+    $status['services']['uploads'] = is_dir($uploadsPath) && is_writable($uploadsPath) ? 'ready' : 'not_ready';
+    
+    // Verificar sessões
+    $sessionPath = session_save_path();
+    if (empty($sessionPath)) {
+        $sessionPath = sys_get_temp_dir();
+    }
+    $status['services']['sessions'] = is_dir($sessionPath) && is_writable($sessionPath) ? 'ready' : 'not_ready';
+    
+    // Informações do sistema (apenas em desenvolvimento)
+    $isProduction = (
+        !empty($_SERVER['HTTPS']) || 
+        (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+    );
+    
+    if (!$isProduction) {
+        $status['system'] = [
+            'session_path' => $sessionPath,
+            'uploads_path' => $uploadsPath,
+            'memory_limit' => ini_get('memory_limit'),
+            'max_execution_time' => ini_get('max_execution_time'),
+            'upload_max_filesize' => ini_get('upload_max_filesize')
+        ];
+    }
     
     http_response_code(200);
-    echo json_encode($status, JSON_PRETTY_PRINT);
+    echo json_encode($status, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     
 } catch (Exception $e) {
     http_response_code(500);
@@ -42,6 +74,6 @@ try {
         'status' => 'unhealthy',
         'error' => $e->getMessage(),
         'timestamp' => date('Y-m-d H:i:s')
-    ], JSON_PRETTY_PRINT);
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 }
 ?>

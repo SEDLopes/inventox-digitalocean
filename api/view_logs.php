@@ -2,6 +2,8 @@
 /**
  * View Server Logs
  * Endpoint para visualizar logs do servidor (apenas para debug)
+ * 
+ * ⚠️ ATENÇÃO: Este endpoint requer autenticação admin
  */
 
 require_once __DIR__ . '/db.php';
@@ -10,7 +12,7 @@ require_once __DIR__ . '/db.php';
 requireAuth();
 
 // Verificar se é admin
-if ($_SESSION['role'] !== 'admin') {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     sendJsonResponse([
         'success' => false,
         'message' => 'Acesso negado. Apenas administradores podem ver logs.'

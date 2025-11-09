@@ -9,6 +9,9 @@ require_once __DIR__ . '/db.php';
 // Verificar autenticação (requireAuth já inicia a sessão se necessário)
 requireAuth();
 
+// CSRF protection (exceto para FormData que não envia token facilmente)
+// Para uploads, validar por outros meios (autenticação já é suficiente)
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     sendJsonResponse([
         'success' => false,
@@ -17,12 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Verificar se há ficheiro enviado
-error_log("Items import - Checking for uploaded file");
-error_log("Items import - FILES array: " . print_r($_FILES, true));
-error_log("Items import - POST array: " . print_r($_POST, true));
-
 if (!isset($_FILES['file'])) {
-    error_log("Items import - Error: No file in FILES array");
     sendJsonResponse([
         'success' => false,
         'message' => 'Nenhum ficheiro foi enviado'
@@ -64,8 +62,6 @@ $fileName = $file['name'];
 $fileTmpPath = $file['tmp_name'];
 $fileSize = $file['size'];
 $fileType = $file['type'];
-
-error_log("Items import - File received: name=$fileName, size=$fileSize, type=$fileType, tmp_path=$fileTmpPath");
 
 // Validar tipo de ficheiro
 $allowedTypes = ['text/csv', 'application/vnd.ms-excel', 
@@ -281,18 +277,10 @@ try {
     // Ficheiros XLS/XLSX: tentar via Python se disponível
     $pythonScript = __DIR__ . '/../scripts/import_items.py';
     
-    // Debug: verificar ficheiro antes de processar
-    error_log("Items import - Processing XLSX file: $uploadPath");
-    error_log("Items import - File size: " . filesize($uploadPath) . " bytes");
-    error_log("Items import - File extension: $fileExtension");
-    error_log("Items import - Python script path: $pythonScript");
-    error_log("Items import - Python script exists: " . (file_exists($pythonScript) ? 'YES' : 'NO'));
-    
     // Verificar se Python está disponível
     $pythonCheck = [];
     $pythonCheckCode = 0;
     exec("which python3 2>&1", $pythonCheck, $pythonCheckCode);
-    error_log("Items import - Python3 check: " . implode("\n", $pythonCheck) . " (code: $pythonCheckCode)");
     
     if ($pythonCheckCode !== 0) {
         error_log("Items import - Error: Python3 not found");
@@ -314,19 +302,14 @@ try {
     }
     
     $command = escapeshellcmd("python3 " . $pythonScript . " " . escapeshellarg($uploadPath));
-    error_log("Items import - Executing command: $command");
     
     $output = [];
     $returnCode = 0;
     exec($command . " 2>&1", $output, $returnCode);
-    
-    error_log("Items import - Python return code: $returnCode");
-    error_log("Items import - Python output: " . implode("\n", $output));
 
     if ($returnCode !== 0) {
-        // Falhou Python: manter ficheiro para debug e devolver erro claro
+        // Falhou Python: devolver erro claro
         error_log("Items import - Python import error (return code $returnCode): " . implode("\n", $output));
-        error_log("Items import - Failed file preserved at: $uploadPath");
         
         $errorMessage = implode("\n", $output);
         if (empty($errorMessage)) {
@@ -344,22 +327,17 @@ try {
     @unlink($uploadPath);
 
     $outputString = implode("\n", $output);
-    error_log("Items import - Python output string: $outputString");
-    
     $result = json_decode($outputString, true);
     
     if (json_last_error() !== JSON_ERROR_NONE) {
         error_log("Items import - JSON decode error: " . json_last_error_msg());
-        error_log("Items import - Raw output: $outputString");
         sendJsonResponse([
             'success' => false,
-            'message' => 'Erro ao processar resposta do script de importação: ' . json_last_error_msg(),
-            'raw_output' => $outputString
+            'message' => 'Erro ao processar resposta do script de importação: ' . json_last_error_msg()
         ], 500);
     }
     
     if ($result && isset($result['success'])) {
-        error_log("Items import - Success: imported=" . ($result['imported'] ?? 0) . ", updated=" . ($result['updated'] ?? 0));
         sendJsonResponse([
             'success' => true,
             'message' => $result['message'] ?? 'Importação concluída',
@@ -372,8 +350,7 @@ try {
     error_log("Items import - Warning: Unexpected result format");
     sendJsonResponse([
         'success' => false,
-        'message' => 'Formato de resposta inesperado do script de importação',
-        'raw_output' => $outputString
+        'message' => 'Formato de resposta inesperado do script de importação'
     ], 500);
 
 } catch (Exception $e) {

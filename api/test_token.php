@@ -2,8 +2,12 @@
 /**
  * Test Token Authentication
  * Endpoint para testar se o token está sendo recebido e validado
+ * 
+ * ⚠️ ATENÇÃO: Este endpoint é apenas para debug/teste
+ * Em produção, requer autenticação admin
  */
 
+require_once __DIR__ . '/protect_debug_endpoints.php';
 require_once __DIR__ . '/db.php';
 
 header('Content-Type: application/json; charset=utf-8');

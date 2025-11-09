@@ -2,7 +2,12 @@
 /**
  * Script de Diagnóstico do Sistema
  * Verifica configuração de sessões, cookies e autenticação
+ * 
+ * ⚠️ ATENÇÃO: Este endpoint é apenas para debug/teste
+ * Em produção, requer autenticação admin
  */
+
+require_once __DIR__ . '/protect_debug_endpoints.php';
 
 // Não usar require db.php para evitar interferir com sessão
 header('Content-Type: application/json; charset=utf-8');

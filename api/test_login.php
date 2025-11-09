@@ -1,9 +1,12 @@
 <?php
 /**
  * Script de teste para verificar login e database
- * Acesse: https://seu-app.ondigitalocean.app/api/test_login.php
+ * 
+ * ⚠️ ATENÇÃO: Este endpoint é apenas para debug/teste
+ * Em produção, requer autenticação admin
  */
 
+require_once __DIR__ . '/protect_debug_endpoints.php';
 require_once __DIR__ . '/db.php';
 
 header('Content-Type: application/json');
