@@ -16,6 +16,29 @@ $method = $_SERVER['REQUEST_METHOD'];
 $db = getDB();
 
 try {
+    // Verificar se as tabelas necessárias existem
+    $checkTable = $db->query("SHOW TABLES LIKE 'inventory_sessions'");
+    $hasInventorySessions = $checkTable->rowCount() > 0;
+    
+    $checkTable = $db->query("SHOW TABLES LIKE 'inventory_counts'");
+    $hasInventoryCounts = $checkTable->rowCount() > 0;
+    
+    if (!$hasInventorySessions) {
+        // Tabela não existe, retornar vazio para GET ou erro para POST/PUT
+        if ($method === 'GET') {
+            sendJsonResponse([
+                'success' => true,
+                'sessions' => [],
+                'session' => null
+            ]);
+        } else {
+            sendJsonResponse([
+                'success' => false,
+                'message' => 'Tabela inventory_sessions não existe. Execute a migração da base de dados.'
+            ], 500);
+        }
+    }
+    
     switch ($method) {
         case 'GET':
             // Listar sessões ou obter uma específica
