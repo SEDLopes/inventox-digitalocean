@@ -798,7 +798,7 @@ async function confirmCountSetup() {
                     company_id: parseInt(companyId),
                     warehouse_id: parseInt(warehouseId)
                 }),
-                method: 'GET'
+                credentials: 'include'
             });
             
             if (!response.ok) {
@@ -1324,7 +1324,7 @@ async function createSession() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, description }),
-            method: 'GET' // Enviar cookies de sessão
+            credentials: 'include'
         });
         
         if (!response.ok) {
@@ -2174,7 +2174,7 @@ async function saveCompany() {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-            method: 'GET'
+            credentials: 'include'
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
