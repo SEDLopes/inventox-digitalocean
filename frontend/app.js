@@ -1044,11 +1044,14 @@ function stopScanner() {
     
     const video = document.getElementById('scannerVideo');
     const placeholder = document.getElementById('scannerPlaceholder');
+    const startBtn = document.getElementById('startScannerBtn');
+    const stopBtn = document.getElementById('stopScannerBtn');
     
-    video.classList.add('hidden');
-    placeholder.classList.remove('hidden');
-    document.getElementById('startScannerBtn').classList.remove('hidden');
-    document.getElementById('stopScannerBtn').classList.add('hidden');
+    if (video) video.classList.add('hidden');
+    if (placeholder) placeholder.classList.remove('hidden');
+    if (startBtn) startBtn.classList.remove('hidden');
+    if (stopBtn) stopBtn.classList.add('hidden');
+    
     const camWrap = document.getElementById('cameraSelectWrapper');
     const camBtn = document.getElementById('switchCameraBtn');
     if (camWrap) camWrap.classList.add('hidden');
@@ -1911,35 +1914,39 @@ async function loadDashboard() {
             
             // Lista de stock baixo
             const lowStockList = document.getElementById('lowStockList');
-            if (stats.low_stock_list && stats.low_stock_list.length > 0) {
-                lowStockList.innerHTML = stats.low_stock_list.map(item => `
-                    <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg border border-red-200">
-                        <div>
-                            <p class="font-semibold">${item.name}</p>
-                            <p class="text-sm text-gray-600">Código: ${item.barcode} | Stock: ${item.quantity}/${item.min_quantity}</p>
+            if (lowStockList) {
+                if (stats.low_stock_list && stats.low_stock_list.length > 0) {
+                    lowStockList.innerHTML = stats.low_stock_list.map(item => `
+                        <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg border border-red-200">
+                            <div>
+                                <p class="font-semibold">${item.name}</p>
+                                <p class="text-sm text-gray-600">Código: ${item.barcode} | Stock: ${item.quantity}/${item.min_quantity}</p>
+                            </div>
+                            <span class="text-red-600 font-bold">Falta: ${item.shortage}</span>
                         </div>
-                        <span class="text-red-600 font-bold">Falta: ${item.shortage}</span>
-                    </div>
-                `).join('');
-            } else {
-                lowStockList.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhum artigo com stock baixo</p>';
+                    `).join('');
+                } else {
+                    lowStockList.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhum artigo com stock baixo</p>';
+                }
             }
             
             // Top categorias
             const topCategoriesList = document.getElementById('topCategoriesList');
-            if (stats.top_categories && stats.top_categories.length > 0) {
-                topCategoriesList.innerHTML = stats.top_categories.map(cat => `
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <div>
-                            <p class="font-semibold">${cat.name}</p>
+            if (topCategoriesList) {
+                if (stats.top_categories && stats.top_categories.length > 0) {
+                    topCategoriesList.innerHTML = stats.top_categories.map(cat => `
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <div>
+                                <p class="font-semibold">${cat.name}</p>
+                            </div>
+                            <span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm font-semibold">
+                                ${cat.items_count} artigos
+                            </span>
                         </div>
-                        <span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm font-semibold">
-                            ${cat.items_count} artigos
-                        </span>
-                    </div>
-                `).join('');
-            } else {
-                topCategoriesList.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma categoria disponível</p>';
+                    `).join('');
+                } else {
+                    topCategoriesList.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhuma categoria disponível</p>';
+                }
             }
             
             // Banner de alerta de stock baixo

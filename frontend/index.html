@@ -15,9 +15,12 @@
     
     <title>InventoX - Sistema de Inventário</title>
     <!-- Tailwind CSS via CDN (para desenvolvimento) -->
+    <!-- TODO: Em produção, compilar Tailwind CSS localmente -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- TODO: Em produção, usar Tailwind compilado via PostCSS -->
+    <!-- ZXing Library - usar versão específica em produção -->
     <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
+    <!-- Configuração da aplicação -->
+    <script src="config.js"></script>
     <style>
         /* Mobile-specific styles */
         @media (max-width: 768px) {
@@ -159,6 +162,11 @@
                 <div id="scanner" class="mb-4 hidden">
                     <video id="scannerVideo" class="w-full max-w-md mx-auto border rounded" playsinline muted></video>
                 </div>
+                
+                <!-- Scanner Placeholder -->
+                <div id="scannerPlaceholder" class="mb-4 p-8 bg-gray-50 rounded-lg text-center border-2 border-dashed border-gray-300">
+                    <p class="text-gray-500">Clique em "Iniciar Scanner" para começar a digitalizar códigos de barras</p>
+                </div>
 
                 <!-- Manual Input -->
                 <div class="mb-4">
@@ -282,10 +290,16 @@
                     <p class="text-2xl font-bold text-purple-600" id="statInventoryValue">€0,00</p>
                 </div>
             </div>
-            <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                 <h3 class="text-lg font-bold mb-4">Artigos com Stock Baixo</h3>
                 <div id="lowStockList" class="space-y-2">
                     <!-- Low stock items will appear here -->
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-bold mb-4">Top 5 Categorias</h3>
+                <div id="topCategoriesList" class="space-y-2">
+                    <!-- Top categories will appear here -->
                 </div>
             </div>
         </div>
