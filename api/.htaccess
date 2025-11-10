@@ -1,29 +1,68 @@
-# API Directory - FORÇAR PHP ABSOLUTO
-# Múltiplas abordagens para garantir processamento PHP
+# InventoX API - Security Headers
+# Proteções de segurança e otimizações
 
-AddType application/x-httpd-php .php
-AddHandler application/x-httpd-php .php
+# Desabilitar listagem de diretórios
+Options -Indexes
 
-<FilesMatch "\.php$">
-    SetHandler application/x-httpd-php
-    ForceType application/x-httpd-php
+# Proteger arquivos sensíveis
+<FilesMatch "\.(env|log|ini|conf|bak|backup|old|tmp)$">
+    Require all denied
 </FilesMatch>
 
-# Configuração específica para arquivos PHP
-<Files "*.php">
-    SetHandler application/x-httpd-php
-    ForceType application/x-httpd-php
-</Files>
+# Proteger endpoints de debug/teste em produção
+<FilesMatch "^(test|debug|fix|force_).*\.php$">
+    # Permitir apenas para localhost ou com autenticação admin
+    # Em produção, descomentar para bloquear completamente:
+    # Require all denied
+</FilesMatch>
 
-# CORS Headers
+# Headers de segurança
 <IfModule mod_headers.c>
+    # Prevenir clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # Prevenir MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # XSS Protection
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Referrer Policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Content Security Policy (básico)
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self';"
+    
+    # CORS (ajustar conforme necessário)
     Header always set Access-Control-Allow-Origin "*"
     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-CSRF-Token, X-Requested-With"
     Header always set Access-Control-Allow-Credentials "true"
+    
+    # Cache headers para assets estáticos
+    <FilesMatch "\.(jpg|jpeg|png|gif|ico|svg|css|js|woff|woff2|ttf|eot)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    
+    # No cache para API responses
+    <FilesMatch "\.php$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
 </IfModule>
 
-# Handle OPTIONS requests
+# Compressão gzip
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/xml
+</IfModule>
+
+# Rewrite rules
 RewriteEngine On
-RewriteCond %{REQUEST_METHOD} OPTIONS
-RewriteRule ^(.*)$ $1 [R=200,L]
+
+# Forçar HTTPS em produção (descomentar se necessário)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Bloquear acesso a arquivos sensíveis
+RewriteRule ^(.*\.env|.*\.log|.*\.ini|.*\.conf|.*\.bak|.*\.backup|.*\.old|.*\.tmp)$ - [F,L]

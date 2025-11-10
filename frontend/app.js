@@ -187,6 +187,19 @@ function initEventListeners() {
         }
     });
     
+    // Botão de processar código manual
+    const processManualBtn = document.getElementById('processManualBtn');
+    if (processManualBtn) {
+        processManualBtn.addEventListener('click', () => {
+            const manualBarcodeField = document.getElementById('manualBarcode');
+            if (manualBarcodeField && manualBarcodeField.value.trim()) {
+                handleBarcode(manualBarcodeField.value.trim());
+            } else {
+                showToast('Digite um código de barras primeiro', 'warning');
+            }
+        });
+    }
+    
     // Session
     const createSessionBtn = document.getElementById('createSessionBtn');
     if (createSessionBtn) {
@@ -273,11 +286,18 @@ function initEventListeners() {
     // Import
     const importFile = document.getElementById('importFile');
     const uploadBtn = document.getElementById('uploadBtn');
+    const importForm = document.getElementById('importForm');
     if (importFile && uploadBtn) {
+        uploadBtn.disabled = !importFile.files.length;
         importFile.addEventListener('change', (e) => {
             uploadBtn.disabled = !e.target.files.length;
         });
-        uploadBtn.addEventListener('click', uploadFile);
+    }
+    if (importForm) {
+        importForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            uploadFile();
+        });
     }
     
     // Refresh sessions
@@ -388,14 +408,40 @@ function initEventListeners() {
 // Inicializar ZXing
 function initZXing() {
     try {
-        if (typeof ZXing === 'undefined' || !ZXing.BrowserMultiFormatReader) {
-            logWarn('ZXing library não foi carregada corretamente');
+        logDebug('Tentando inicializar ZXing...');
+        logDebug('ZXing disponível:', typeof ZXing !== 'undefined');
+        
+        if (typeof ZXing === 'undefined') {
+            logWarn('ZXing library não foi carregada - objeto ZXing não encontrado');
+            // Tentar novamente após 1 segundo
+            setTimeout(initZXing, 1000);
             return;
         }
+        
+        if (!ZXing.BrowserMultiFormatReader) {
+            logWarn('ZXing.BrowserMultiFormatReader não disponível');
+            setTimeout(initZXing, 1000);
+            return;
+        }
+        
         codeReader = new ZXing.BrowserMultiFormatReader();
+        logDebug('ZXing inicializado com sucesso - codeReader criado');
+        
+        // Testar se conseguimos obter câmaras
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+            navigator.mediaDevices.enumerateDevices()
+                .then(devices => {
+                    const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                    logDebug('Câmaras disponíveis:', videoDevices.length);
+                    availableCameras = videoDevices;
+                })
+                .catch(err => logWarn('Erro ao enumerar câmaras:', err));
+        }
+        
     } catch (e) {
         logError('Erro ao inicializar ZXing:', e);
-        // Não mostrar toast aqui para evitar erro antes do DOM estar pronto
+        // Tentar novamente após 2 segundos
+        setTimeout(initZXing, 2000);
     }
 }
 
@@ -912,8 +958,12 @@ async function confirmCountSetup() {
 // Iniciar Scanner (após configuração)
 async function startScanner() {
     logDebug('startScanner called - isMobileDevice:', isMobileDevice, 'isIOSDevice:', isIOSDevice);
+    logDebug('codeReader disponível:', !!codeReader);
+    logDebug('ZXing disponível:', typeof ZXing !== 'undefined');
+    
     if (!codeReader || typeof ZXing === 'undefined') {
         showToast('Scanner não disponível. Certifique-se que a biblioteca ZXing foi carregada.', 'error');
+        logError('Scanner não pode ser iniciado - codeReader:', !!codeReader, 'ZXing:', typeof ZXing !== 'undefined');
         return;
     }
     
@@ -1021,20 +1071,39 @@ async function startScanner() {
             if (result) {
                 let barcodeText = null;
                 try {
+                    logDebug('Scanner detectou resultado:', result);
+                    
                     if (typeof result.getText === 'function') {
                         barcodeText = result.getText();
+                        logDebug('Código extraído via getText():', barcodeText);
                     } else if (result.text) {
                         barcodeText = result.text;
+                        logDebug('Código extraído via .text:', barcodeText);
                     } else if (typeof result === 'string') {
                         barcodeText = result;
+                        logDebug('Código como string:', barcodeText);
                     }
-                    if (barcodeText) {
+                    
+                    if (barcodeText && barcodeText.trim()) {
+                        logDebug('Código de barras detectado:', barcodeText);
+                        
+                        // Atualizar status
+                        const scannerStatusText = document.getElementById('scannerStatusText');
+                        if (scannerStatusText) {
+                            scannerStatusText.textContent = `Processando código: ${barcodeText.trim()}`;
+                        }
+                        
                         if (isMobileDevice && navigator.vibrate) navigator.vibrate(200);
-                        handleBarcode(barcodeText);
+                        handleBarcode(barcodeText.trim());
                         stopScanner();
+                    } else {
+                        logDebug('Resultado vazio ou inválido');
                     }
-                } catch (_) {}
+                } catch (e) {
+                    logError('Erro ao processar resultado do scanner:', e);
+                }
             }
+            
             // Ignorar erros esperados do fluxo de leitura contínua
             if (err) {
                 const errorName = err.name || '';
@@ -1053,17 +1122,48 @@ async function startScanner() {
             }
         };
 
+        logDebug('Iniciando decodificação...');
         await startDecode();
+        logDebug('Decodificação iniciada com sucesso');
         
         // Mostrar o container do scanner e o vídeo
         const scannerContainer = document.getElementById('scanner');
         if (scannerContainer) {
             scannerContainer.classList.remove('hidden');
+            logDebug('Scanner container mostrado');
         }
-        if (placeholder) placeholder.classList.add('hidden');
-        if (video) video.classList.remove('hidden');
+        if (placeholder) {
+            placeholder.classList.add('hidden');
+            logDebug('Placeholder escondido');
+        }
+        if (video) {
+            video.classList.remove('hidden');
+            logDebug('Vídeo mostrado - dimensões:', video.videoWidth, 'x', video.videoHeight);
+            
+            // Verificar se o vídeo está realmente a reproduzir
+            video.addEventListener('loadedmetadata', () => {
+                logDebug('Vídeo metadata carregada - dimensões:', video.videoWidth, 'x', video.videoHeight);
+            });
+            
+            video.addEventListener('playing', () => {
+                logDebug('Vídeo está a reproduzir');
+            });
+        }
+        
         document.getElementById('startScannerBtn').classList.add('hidden');
         document.getElementById('stopScannerBtn').classList.remove('hidden');
+        
+        // Mostrar indicador de status
+        const scannerStatus = document.getElementById('scannerStatus');
+        const scannerStatusText = document.getElementById('scannerStatusText');
+        if (scannerStatus) {
+            scannerStatus.classList.remove('hidden');
+            if (scannerStatusText && currentSessionId) {
+                scannerStatusText.textContent = `Sessão ativa - Pronto para escanear códigos`;
+            }
+        }
+        
+        logDebug('Scanner iniciado com sucesso');
         const camWrap = document.getElementById('cameraSelectWrapper');
         const camBtn = document.getElementById('switchCameraBtn');
         
@@ -1142,8 +1242,11 @@ function stopScanner() {
     
     const camWrap = document.getElementById('cameraSelectWrapper');
     const camBtn = document.getElementById('switchCameraBtn');
+    const scannerStatus = document.getElementById('scannerStatus');
+    
     if (camWrap) camWrap.classList.add('hidden');
     if (camBtn) camBtn.classList.add('hidden');
+    if (scannerStatus) scannerStatus.classList.add('hidden');
 }
 
 // Preencher seletor de câmaras
@@ -1335,7 +1438,7 @@ async function handleBarcode(barcode) {
             document.getElementById('scannerItemQuantity').textContent = item.quantity || 0;
             
             // Preencher campo manual com o barcode real do item (não o código de referência digitado)
-            document.getElementById('manualBarcode').value = item.barcode;
+            document.getElementById('itemCardManualBarcode').value = item.barcode;
             
             // Valor padrão da quantidade contada = quantidade atual
             const currentQty = item.quantity || 0;
@@ -1360,7 +1463,18 @@ async function handleBarcode(barcode) {
                     // Trocar para tab de artigos após abrir modal
                     switchTab('items');
                 };
-                itemInfoCard.querySelector('button#saveCountBtn').parentNode.insertBefore(editButton, itemInfoCard.querySelector('button#saveCountBtn'));
+                
+                // Encontrar o container dos botões e adicionar o botão de editar
+                const saveCountBtn = itemInfoCard.querySelector('button[onclick="saveCount()"]');
+                if (saveCountBtn && saveCountBtn.parentNode) {
+                    saveCountBtn.parentNode.insertBefore(editButton, saveCountBtn);
+                } else {
+                    // Fallback: adicionar ao final do itemInfoContent
+                    const itemInfoContent = itemInfoCard.querySelector('#itemInfoContent');
+                    if (itemInfoContent) {
+                        itemInfoContent.appendChild(editButton);
+                    }
+                }
             }
             
             // Mostrar feedback específico se foi encontrado por código de referência
@@ -1650,7 +1764,7 @@ async function saveCount() {
         }
     }
     
-    const barcode = currentBarcode || document.getElementById('manualBarcode').value;
+    const barcode = currentBarcode || document.getElementById('itemCardManualBarcode').value;
     const countedQuantity = document.getElementById('countedQuantity').value;
     
     // Validações
@@ -1707,15 +1821,27 @@ async function saveCount() {
                 loadSessionInfo(currentSessionId, false);
             }
             
-            // Limpar campos mas manter o card visível para permitir nova contagem
+            // Fechar o card de informações do item após guardar
+            document.getElementById('itemInfoCard').classList.add('hidden');
+            
+            // Limpar dados globais
+            currentBarcode = null;
+            currentItemId = null;
+            
+            // Limpar campos
             document.getElementById('countedQuantity').value = 0;
-            document.getElementById('manualBarcode').value = '';
+            document.getElementById('itemCardManualBarcode').value = '';
             
-            // Não ocultar o itemInfoCard para permitir múltiplas contagens
-            // document.getElementById('itemInfoCard').classList.add('hidden');
-            
-            // Focar no campo de quantidade para permitir nova contagem rápida
-            document.getElementById('countedQuantity').focus();
+            // Reativar o scanner automaticamente para continuar escaneando
+            setTimeout(async () => {
+                try {
+                    await startScanner();
+                    showToast('Scanner reativado - pronto para o próximo código!', 'info');
+                } catch (error) {
+                    logError('Erro ao reativar scanner:', error);
+                    showToast('Erro ao reativar scanner. Use entrada manual ou reinicie.', 'warning');
+                }
+            }, 500); // Pequeno delay para garantir que o card foi fechado
         } else {
             showToast(data.message || 'Erro ao guardar contagem', 'error');
         }
@@ -1966,6 +2092,7 @@ function closeSessionDetails() {
 // Fazer Upload de Ficheiro
 async function uploadFile() {
     const fileInput = document.getElementById('importFile');
+    const uploadBtn = document.getElementById('uploadBtn');
     const file = fileInput.files[0];
     
     // Validação
@@ -1975,6 +2102,7 @@ async function uploadFile() {
         return;
     }
     
+    if (uploadBtn) uploadBtn.disabled = true;
     const formData = new FormData();
     formData.append('file', file);
     
@@ -1996,47 +2124,53 @@ async function uploadFile() {
             console.error('Resposta recebida:', responseText.substring(0, 500));
             hideLoading();
             showToast('Erro ao processar resposta do servidor', 'error');
+            if (uploadBtn) uploadBtn.disabled = false;
             return;
         }
         
         if (!response.ok) {
             hideLoading();
             showToast(data.message || `Erro no upload (${response.status})`, 'error');
+            if (uploadBtn) uploadBtn.disabled = false;
             return;
         }
         
         hideLoading();
         
-        const resultDiv = document.getElementById('importResult');
-        resultDiv.classList.remove('hidden');
+        const resultDiv = document.getElementById('importResults');
+        if (resultDiv) {
+            resultDiv.classList.remove('hidden');
+        }
         
         if (data.success) {
-            resultDiv.className = 'p-4 bg-green-50 rounded-lg text-green-800';
-            const errorsHtml = (data.errors && data.errors.length)
-                ? `<div class="mt-2 text-red-700"><p class="font-semibold mb-1">Ocorreram alguns avisos/erros:</p><ul class="list-disc ml-5 text-sm">${data.errors.slice(0,10).map(e => `<li>${e}</li>`).join('')}</ul>${data.errors.length>10?`<p class=\"text-xs mt-1\">(+${data.errors.length-10} mais)</p>`:''}</div>`
-                : '';
-            const uploadBtn = document.getElementById('uploadBtn');
-            if (uploadBtn) uploadBtn.disabled = true;
-            
-            resultDiv.innerHTML = `
-                <p class="font-bold">Importação concluída com sucesso!</p>
-                <p class="text-sm mt-2">
-                    Importados: ${data.imported || 0} | 
-                    Atualizados: ${data.updated || 0}
-                </p>
-                ${errorsHtml}
-            `;
+            if (resultDiv) {
+                resultDiv.className = 'p-4 bg-green-50 rounded-lg text-green-800';
+                const errorsHtml = (data.errors && data.errors.length)
+                    ? `<div class="mt-2 text-red-700"><p class="font-semibold mb-1">Ocorreram alguns avisos/erros:</p><ul class="list-disc ml-5 text-sm">${data.errors.slice(0,10).map(e => `<li>${e}</li>`).join('')}</ul>${data.errors.length>10?`<p class=\"text-xs mt-1\">(+${data.errors.length-10} mais)</p>`:''}</div>`
+                    : '';
+                resultDiv.innerHTML = `
+                    <p class="font-bold">Importação concluída com sucesso!</p>
+                    <p class="text-sm mt-2">
+                        Importados: ${data.imported || 0} | 
+                        Atualizados: ${data.updated || 0}
+                    </p>
+                    ${errorsHtml}
+                `;
+            }
             fileInput.value = '';
-            const uploadBtn2 = document.getElementById('uploadBtn');
-            if (uploadBtn2) uploadBtn2.disabled = true;
+            if (uploadBtn) uploadBtn.disabled = true;
         } else {
-            resultDiv.className = 'p-4 bg-red-50 rounded-lg text-red-800';
-            resultDiv.innerHTML = `<p>${data.message}</p>`;
+            if (resultDiv) {
+                resultDiv.className = 'p-4 bg-red-50 rounded-lg text-red-800';
+                resultDiv.innerHTML = `<p>${data.message}</p>`;
+            }
+            if (uploadBtn) uploadBtn.disabled = false;
         }
     } catch (error) {
         hideLoading();
         showToast('Erro ao fazer upload', 'error');
         console.error(error);
+        if (uploadBtn) uploadBtn.disabled = false;
     }
 }
 
@@ -2115,10 +2249,10 @@ async function loadDashboard() {
             document.getElementById('statLowStock').textContent = stats.low_stock_items || 0;
             document.getElementById('statOpenSessions').textContent = stats.open_sessions || 0;
             
-            // Formatar valor do inventário
+            // Formatar valor do inventário em CVE (Escudos Cabo-verdianos)
             const value = stats.total_inventory_value || 0;
             document.getElementById('statInventoryValue').textContent = 
-                new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
+                new Intl.NumberFormat('pt-CV', { style: 'currency', currency: 'CVE' }).format(value);
             
             // Lista de stock baixo
             const lowStockList = document.getElementById('lowStockList');
@@ -2242,7 +2376,7 @@ async function loadItems(page = 1, search = '') {
                                 <div class="mt-2 flex space-x-4 text-sm">
                                     <span><strong>Categoria:</strong> ${item.category_name || 'Sem categoria'}</span>
                                     <span><strong>Quantidade:</strong> ${item.quantity}</span>
-                                    <span><strong>Preço:</strong> ${new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(item.unit_price || 0)}</span>
+                                    <span><strong>Preço:</strong> ${new Intl.NumberFormat('pt-CV', { style: 'currency', currency: 'CVE' }).format(item.unit_price || 0)}</span>
                                 </div>
                                 ${item.location ? `<p class="text-xs text-gray-500 mt-1"><strong>Local:</strong> ${item.location}</p>` : ''}
                             </div>
@@ -2625,6 +2759,24 @@ async function openItemModal(itemId = null) {
 function closeItemModal() {
     document.getElementById('itemModal').classList.add('hidden');
     document.getElementById('itemForm').reset();
+}
+
+// Fechar Card de Informações do Item
+function closeItemInfo() {
+    const itemInfoCard = document.getElementById('itemInfoCard');
+    if (itemInfoCard) {
+        itemInfoCard.classList.add('hidden');
+    }
+    
+    // Limpar dados
+    currentBarcode = null;
+    currentItemId = null;
+    
+    // Limpar campos
+    const manualBarcodeField = document.getElementById('itemCardManualBarcode');
+    const countedQuantityField = document.getElementById('countedQuantity');
+    if (manualBarcodeField) manualBarcodeField.value = '';
+    if (countedQuantityField) countedQuantityField.value = '0';
 }
 
 // Guardar Artigo
@@ -3525,6 +3677,7 @@ window.editItem = editItem;
 window.deleteItem = deleteItem;
 window.openItemModal = openItemModal;
 window.closeItemModal = closeItemModal;
+window.closeItemInfo = closeItemInfo;
 window.editCategory = editCategory;
 window.deleteCategory = deleteCategory;
 window.openCategoryModal = openCategoryModal;

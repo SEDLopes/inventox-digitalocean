@@ -350,6 +350,45 @@ try {
                     'notes2' => sanitizeInput($input['notes'] ?? '')
                 ]);
 
+                // Criar movimento de stock se houver diferença
+                if ($difference != 0) {
+                    try {
+                        $movementType = $difference > 0 ? 'entrada' : 'saida';
+                        $movementQuantity = abs($difference);
+                        $reason = "Ajuste de inventário - Sessão: " . $sessionId . " (Contado: $countedQuantity, Esperado: $expectedQuantity)";
+                        
+                        // Verificar se a tabela stock_movements existe
+                        $checkStockTable = $db->query("SHOW TABLES LIKE 'stock_movements'");
+                        if ($checkStockTable->rowCount() > 0) {
+                            $stockStmt = $db->prepare("
+                                INSERT INTO stock_movements (item_id, movement_type, quantity, reason, user_id)
+                                VALUES (:item_id, :movement_type, :quantity, :reason, :user_id)
+                            ");
+                            $stockStmt->execute([
+                                'item_id' => $item['id'],
+                                'movement_type' => $movementType,
+                                'quantity' => $difference, // Manter sinal (+ ou -)
+                                'reason' => $reason,
+                                'user_id' => $userId
+                            ]);
+                            
+                            // Atualizar quantidade do item
+                            $updateItemStmt = $db->prepare("
+                                UPDATE items SET quantity = :new_quantity WHERE id = :item_id
+                            ");
+                            $updateItemStmt->execute([
+                                'new_quantity' => $countedQuantity,
+                                'item_id' => $item['id']
+                            ]);
+                            
+                            error_log("Stock movement created: Item {$item['id']}, Type: $movementType, Quantity: $difference");
+                        }
+                    } catch (PDOException $e) {
+                        error_log("Error creating stock movement: " . $e->getMessage());
+                        // Não falhar a contagem por causa do movimento
+                    }
+                }
+
                 sendJsonResponse([
                     'success' => true,
                     'message' => 'Contagem registada com sucesso',

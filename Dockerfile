@@ -5,7 +5,7 @@ LABEL maintainer="Sandro Lopes <sandro.lopes@example.com>"
 LABEL version="1.0"
 LABEL description="InventoX PHP Application with Apache"
 
-# Instalar extensões PHP necessárias e ferramentas de diagnóstico
+# Instalar extensões PHP necessárias, Python3 e ferramentas de diagnóstico
 RUN apt-get update && apt-get install -y \
     libzip-dev \
     zip \
@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     procps \
+    python3 \
+    python3-pip \
+    python3-venv \
     && docker-php-ext-install \
     pdo \
     pdo_mysql \
@@ -30,7 +33,12 @@ RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf
 # Copiar arquivos da aplicação
 COPY frontend/ /var/www/html/frontend/
 COPY api/ /var/www/html/api/
+COPY scripts/ /var/www/html/scripts/
 COPY .htaccess /var/www/html/.htaccess
+
+# Instalar dependências Python
+COPY scripts/requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir --break-system-packages -r /tmp/requirements.txt && rm /tmp/requirements.txt
 
 # Criar index.php para healthcheck e root
 RUN echo '<?php' > /var/www/html/index.php && \
@@ -61,7 +69,12 @@ RUN echo 'engine = On' >> /usr/local/etc/php/php.ini && \
     echo 'default_mimetype = "text/html"' >> /usr/local/etc/php/php.ini && \
     echo 'default_charset = "UTF-8"' >> /usr/local/etc/php/php.ini && \
     echo 'max_execution_time = 30' >> /usr/local/etc/php/php.ini && \
-    echo 'memory_limit = 128M' >> /usr/local/etc/php/php.ini
+    echo 'memory_limit = 128M' >> /usr/local/etc/php/php.ini && \
+    echo 'upload_max_filesize = 10M' >> /usr/local/etc/php/php.ini && \
+    echo 'post_max_size = 12M' >> /usr/local/etc/php/php.ini && \
+    echo 'display_errors = Off' >> /usr/local/etc/php/php.ini && \
+    echo 'log_errors = On' >> /usr/local/etc/php/php.ini && \
+    echo 'error_log = /var/log/php_errors.log' >> /usr/local/etc/php/php.ini
 
 # Definir diretório de trabalho
 WORKDIR /var/www/html

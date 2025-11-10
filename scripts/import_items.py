@@ -47,7 +47,8 @@ def import_items(file_path):
             }
         
         # Debug: mostrar colunas originais
-        print(f"DEBUG: Colunas originais: {df.columns.tolist()}", file=sys.stderr)
+        if os.getenv('DEBUG', 'False').lower() == 'true':
+            print(f"DEBUG: Colunas originais: {df.columns.tolist()}", file=sys.stderr)
         
         # Normalizar nomes das colunas (lowercase, sem espaços, remover BOM)
         df.columns = df.columns.str.replace('\ufeff', '', regex=False).str.lower().str.strip().str.replace(' ', '_')
@@ -56,8 +57,9 @@ def import_items(file_path):
         df = df.loc[:, df.columns != '']  # Remove colunas com nome vazio
         df = df.loc[:, ~df.columns.str.contains('^unnamed:', case=False, na=False)]  # Remove colunas "Unnamed"
         
-        # Debug: mostrar colunas após normalização e limpeza
-        print(f"DEBUG: Colunas normalizadas e limpas: {df.columns.tolist()}", file=sys.stderr)
+        # Debug: mostrar colunas após normalização e limpeza (apenas se DEBUG=True)
+        if os.getenv('DEBUG', 'False').lower() == 'true':
+            print(f"DEBUG: Colunas normalizadas e limpas: {df.columns.tolist()}", file=sys.stderr)
         
         # Mapear colunas esperadas (incluindo variações com acentos e pontuação)
         column_mapping = {
@@ -108,9 +110,10 @@ def import_items(file_path):
         
         df.rename(columns=rename_dict, inplace=True)
         
-        # Debug: mostrar colunas finais
-        print(f"DEBUG: Colunas finais: {df.columns.tolist()}", file=sys.stderr)
-        print(f"DEBUG: Mapeamento aplicado: {rename_dict}", file=sys.stderr)
+        # Debug: mostrar colunas finais (apenas se DEBUG=True)
+        if os.getenv('DEBUG', 'False').lower() == 'true':
+            print(f"DEBUG: Colunas finais: {df.columns.tolist()}", file=sys.stderr)
+            print(f"DEBUG: Mapeamento aplicado: {rename_dict}", file=sys.stderr)
         
         # Validar colunas obrigatórias APÓS normalização/renomeação
         required_columns = ['barcode', 'name']
