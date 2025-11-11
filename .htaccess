@@ -33,6 +33,9 @@ RewriteRule ^frontend/.*$ /frontend/index.html [L]
     # Referrer Policy
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     
+    # Content Security Policy - Sem CDN Tailwind
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self';"
+    
     # CORS - Apenas para requisições cross-origin (se necessário)
     # Para same-origin requests, CORS não é necessário
     # Se precisar de CORS, descomente e configure a origem específica
